@@ -10,6 +10,7 @@ from wtforms.validators import InputRequired
 
 from udas.database import db_session
 from udas.models import Study, Class, Student, Admin, ClassTypes
+from udas.repofactory import rf
 
 
 class UniqueValue(object):
@@ -159,21 +160,22 @@ class AnnounceForm(FlaskForm):
             self.recv_type.data = recv_type
 
         if self.recv_type.data == 1:
+            # Prodi
             if g.is_admin:
-                self.receiver.choices = [(obj.id, obj.name) for obj in db_session.query(Study).all()]
+                study_progs = rf.study_repo().get_all()
             else:
-                publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
-                self.receiver.choices = [(obj.id, obj.name) for obj in publisher.studies]
+                publisher = rf.admin_repo().get_publisher_by_username(g.curr_user)
+                study_progs = rf.admin_repo().get_allowed_study_programs(publisher)
+            self.receiver.choices = [(obj.id, obj.name) for obj in study_progs]
         elif self.recv_type.data == 2:
+            # Kelas
             if g.is_admin:
-                self.receiver.choices = [(obj.id, str(obj))
-                                         for obj in
-                                         db_session.query(Class).order_by(Class.year.asc(), Class.study_id.asc()).all()]
+                classes = rf.class_repo().get_all()
             else:
-                pub = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
-                self.receiver.choices = []
-                for study in pub.studies:
-                    [self.receiver.choices.append((obj.id, str(obj))) for obj in study.classes]
+                publisher = rf.admin_repo().get_publisher_by_username(g.curr_user)
+                study_progs = rf.admin_repo().get_allowed_study_programs(publisher)
+                classes = rf.class_repo().get_by_study_programs(study_progs)
+            self.receiver.choices = [(obj.id, obj.name) for obj in classes]
         elif self.recv_type.data == 3:
             if g.is_admin:
                 self.receiver.choices = [(obj.id, '%s - %s' % (obj.username, obj.name))

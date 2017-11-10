@@ -3,8 +3,7 @@
 
 from flask import render_template, request, url_for
 
-from udas.database import db_session
-from udas.models import Admin, Study
+from udas.repofactory import rf, AdminModel
 from udas.login import AdminRequired
 from udas.crud import Crud, BaseCreateView, BaseReadView, BaseUpdateView, BaseDeleteView
 from udas.forms import PublisherForm
@@ -15,7 +14,7 @@ render_template = decorate_function(render_template, page='publisher')
 
 
 def render_html_data_list():
-    results = db_session.query(Admin).filter(Admin.role == 'PUB').all()
+    results = rf.admin_repo().get_all_publisher()
     return render_template('admin/partials/pub/publisher_list.html', objs=results)
 
 
@@ -29,15 +28,12 @@ class CreateView(BaseCreateView):
         return PublisherForm(request.form) if method == 'POST' else PublisherForm()
 
     def save_form(self, form):
-        assoc = db_session.query(Study).filter(Study.id.in_(form.allowed_study_program.data)).all()
-        pub = Admin()
+        pub = AdminModel()
         pub.name = form.name.data
         pub.username = form.username.data
         pub.password = form.password.data
         pub.role = 'PUB'
-        pub.studies = assoc
-        db_session.add(pub)
-        db_session.commit()
+        rf.admin_repo().add(pub, form.allowed_study_program.data)
         return True, None
 
     def render_form(self, form):
@@ -70,17 +66,14 @@ class UpdateView(BaseUpdateView):
         super().__init__(render_html_data_list)
 
     def get_model(self, obj_id):
-        return db_session.query(Admin).filter(Admin.id == obj_id, Admin.role == 'PUB').first()
+        return rf.admin_repo().get_publisher_by_id(obj_id)
 
     def modify_model(self, form, model):
-        assoc = db_session.query(Study).filter(Study.id.in_(form.allowed_study_program.data)).all()
-
         model.name = form.name.data
         model.username = form.username.data
-        model.studies = assoc
         if form.password.data:
             model.password = form.password.data
-        db_session.commit()
+        rf.admin_repo().update_by_id(model.id, model, form.allowed_study_program.data)
         return True, None
 
     def create_form(self, method, model):
@@ -89,7 +82,7 @@ class UpdateView(BaseUpdateView):
             form.name.data = model.name
             form.username.data = model.username
             form.password.render_kw = {'placeholder': 'Password disembunyikan!'}
-            form.allowed_study_program.data = [obj.id for obj in model.studies]
+            form.allowed_study_program.data = [obj.id for obj in rf.admin_repo().get_allowed_study_programs(model)]
             return form
         else:
             return PublisherForm(request.form, True, model.username)
@@ -111,11 +104,10 @@ class DeleteView(BaseDeleteView):
         super().__init__(render_html_data_list)
 
     def get_model(self, obj_id):
-        return db_session.query(Admin).get(obj_id)
+        return rf.admin_repo().get_publisher_by_id(obj_id)
 
     def delete_model(self, model):
-        db_session.delete(model)
-        db_session.commit()
+        rf.admin_repo().delete_by_id(model.id)
         return True, None
 
     def render_delete_form(self, model):

@@ -3,8 +3,7 @@
 
 from flask import render_template, request, url_for
 
-from udas.database import db_session
-from udas.models import Study
+from udas.repofactory import rf, StudyModel
 from udas.login import AdminRequired
 from udas.crud import Crud, BaseCreateView, BaseUpdateView, BaseReadView, BaseDeleteView
 from udas.forms import StudyForm
@@ -15,9 +14,10 @@ render_template = decorate_function(render_template, page='study')
 
 
 def get_data_list():
-    results = db_session.query(Study).order_by(Study.id.desc()).all()
+    results = rf.study_repo().get_all()
     for res in results:
-        res.classes_count = len(res.classes)
+        # ToDo
+        res.classes_count = 0
     return results
 
 
@@ -35,9 +35,9 @@ class CreateView(BaseCreateView):
         return StudyForm()
 
     def save_form(self, form):
-        study = Study(name=form.name.data)
-        db_session.add(study)
-        db_session.commit()
+        study = StudyModel()
+        study.name = form.name.data
+        rf.study_repo().add(study)
         return True, None
 
     def render_form(self, form):
@@ -71,7 +71,7 @@ class UpdateView(BaseUpdateView):
         super().__init__(render_html_data_list)
 
     def get_model(self, obj_id):
-        return db_session.query(Study).get(obj_id)
+        return rf.study_repo().get_by_id(obj_id)
 
     def create_form(self, method, model):
         if method == 'GET':
@@ -83,7 +83,7 @@ class UpdateView(BaseUpdateView):
 
     def modify_model(self, form, model):
         model.name = form.name.data
-        db_session.commit()
+        rf.study_repo().update_by_id(model.id, model)
         return True, None
 
     def render_form(self, form, obj_id):
@@ -102,14 +102,13 @@ class DeleteView(BaseDeleteView):
         super().__init__(render_html_data_list)
 
     def get_model(self, obj_id):
-        return db_session.query(Study).get(obj_id)
+        return rf.study_repo().get_by_id(obj_id)
 
     def render_delete_form(self, model):
         return render_template('admin/partials/sp/studyprogram_delete.html', obj=model)
 
     def delete_model(self, model):
-        db_session.delete(model)
-        db_session.commit()
+        rf.study_repo().delete_by_id(model.id)
         return True, None
 
 

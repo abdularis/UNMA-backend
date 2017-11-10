@@ -3,8 +3,7 @@
 
 from flask import render_template, request, url_for
 
-from udas.database import db_session
-from udas.models import Class
+from udas.repofactory import rf, ClassModel
 from udas.login import AdminRequired
 from udas.crud import Crud, BaseCreateView, BaseReadView, BaseUpdateView, BaseDeleteView
 from udas.forms import ClassForm
@@ -15,7 +14,7 @@ render_template = decorate_function(render_template, page='class')
 
 
 def render_html_data_list():
-    results = db_session.query(Class).all()
+    results = rf.class_repo().get_all()
     return render_template('admin/partials/cls/class_list.html', objs=results)
 
 
@@ -29,13 +28,12 @@ class CreateView(BaseCreateView):
         return ClassForm(request.form) if method == 'POST' else ClassForm()
 
     def save_form(self, form):
-        cls = Class()
+        cls = ClassModel()
         cls.study_id = form.study_program.data
         cls.name = form.name.data
         cls.year = form.year.data
         cls.type = form.cls_type.data
-        db_session.add(cls)
-        db_session.commit()
+        rf.class_repo().add(cls)
         return True, None
 
     def render_form(self, form):
@@ -68,14 +66,14 @@ class UpdateView(BaseUpdateView):
         super().__init__(render_html_data_list)
 
     def get_model(self, obj_id):
-        return db_session.query(Class).get(obj_id)
+        return rf.class_repo().get_by_id(obj_id)
 
     def modify_model(self, form, model):
         model.study_id = form.study_program.data
         model.name = form.name.data
         model.year = form.year.data
         model.type = form.cls_type.data
-        db_session.commit()
+        rf.class_repo().update_by_id(model.id, model)
         return True, None
 
     def create_form(self, method, model):
@@ -106,11 +104,10 @@ class DeleteView(BaseDeleteView):
         super().__init__(render_html_data_list)
 
     def get_model(self, obj_id):
-        return db_session.query(Class).get(obj_id)
+        return rf.class_repo().get_by_id(obj_id)
 
     def delete_model(self, model):
-        db_session.delete(model)
-        db_session.commit()
+        rf.class_repo().delete_by_id(model.id)
         return True, None
 
     def render_delete_form(self, model):

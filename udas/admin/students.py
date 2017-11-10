@@ -1,10 +1,10 @@
 # students.py
 # Created by abdularis on 18/10/17
+import datetime
 
 from flask import render_template, request, url_for
 
-from udas.database import db_session
-from udas.models import Student
+from udas.repofactory import rf, StudentModel
 from udas.login import AdminRequired
 from udas.crud import Crud, BaseCreateView, Interceptor, BaseReadView, BaseUpdateView, BaseDeleteView
 from udas.forms import StudentForm
@@ -16,7 +16,7 @@ render_template = decorate_function(render_template, page='student')
 
 
 def render_html_data_list():
-    results = db_session.query(Student).all()
+    results = rf.student_repo().get_all()
     return render_template('admin/partials/std/student_list.html', objs=results)
 
 
@@ -42,13 +42,14 @@ class CreateView(BaseCreateView):
         return True, None
 
     def save_form(self, form):
-        std = Student()
+        std = StudentModel()
         std.name = form.name.data
         std.username = form.username.data
         std.password = form.password.data
         std.class_id = form.std_class.data
-        db_session.add(std)
-        db_session.commit()
+        std.date_created = datetime.datetime.utcnow()
+        std.last_login = None
+        rf.student_repo().add(std)
         return True, None
 
     def render_form(self, form):
@@ -98,7 +99,7 @@ class UpdateView(BaseUpdateView):
         model.class_id = form.std_class.data
         if form.password.data:
             model.password = form.password.data
-        db_session.commit()
+        rf.student_repo().update_by_id(model.id, model)
         return True, None
 
     def create_form(self, method, model):
@@ -108,13 +109,13 @@ class UpdateView(BaseUpdateView):
             form.username.data = model.username
             form.password.render_kw = {'placeholder': 'Password disembunyikan!'}
             form.std_class.data = model.class_id
-            form.study_program.data = model.my_class.study.id
+            form.study_program.data = rf.study_repo().get_by_student(model).id
             return form
         else:
             return StudentForm(request.form, True, model.username)
 
     def get_model(self, obj_id):
-        return db_session.query(Student).get(obj_id)
+        return rf.student_repo().get_by_id(obj_id)
 
 
 class DeleteView(BaseDeleteView):
@@ -124,11 +125,10 @@ class DeleteView(BaseDeleteView):
         super().__init__(render_html_data_list)
 
     def get_model(self, obj_id):
-        return db_session.query(Student).get(obj_id)
+        return rf.student_repo().get_by_id(obj_id)
 
     def delete_model(self, model):
-        db_session.delete(model)
-        db_session.commit()
+        rf.student_repo().delete_by_id(model.id)
         return True, None
 
     def render_delete_form(self, model):

@@ -6,7 +6,6 @@ from flask_bcrypt import generate_password_hash, check_password_hash
 from sqlalchemy import Column, Integer, Float, String, Text, DateTime, ForeignKey, Table, func, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.hybrid import hybrid_property
 
 BaseTable = declarative_base()
 
@@ -16,20 +15,9 @@ class BaseUser(object):
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
     username = Column(String(50), unique=True)
-    _password = Column('password', String(128))
+    password = Column(String(128))
     date_created = Column(DateTime, default=func.now())
     last_login = Column(DateTime)
-
-    @hybrid_property
-    def password(self):
-        return self._password
-
-    @password.setter
-    def password(self, password):
-        self._password = generate_password_hash(password)
-
-    def verify_password(self, other):
-        return check_password_hash(self._password, other)
 
 
 """
