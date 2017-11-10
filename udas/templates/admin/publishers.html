@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+{% block body %}
+{% include 'includes/navbar.html' %}
+
+<div class="container">
+    <div class="mt-3">
+        <h1>Publisher</h1>
+    </div>
+
+    <div class="mt-4 mb-3">
+        <button type="button" class="btn btn-primary js-btn-create" data-href="{{url_for('admin.publisher_create')}}">
+            Tambah
+        </button>
+    </div>
+
+    <table class="table table-hover table-sm js-dynamic-table">
+
+    </table>
+
+    <div id="formModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'includes/_js_dep.html' %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/me/crud.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/me/listloader.js') }}"></script>
+<script type="text/javascript">
+$(function() {
+    listLoader("{{ url_for('admin.publisher_read', act='list') }}", ".js-dynamic-table")
+})
+</script>
+{% endblock %}

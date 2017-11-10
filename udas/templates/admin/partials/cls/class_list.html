@@ -1,0 +1,35 @@
+<thead class="thead-default">
+    <tr>
+        <th># ({{objs|length}})</th>
+        <th>Prodi</th>
+        <th>Nama</th>
+        <th>Tahun Angkatan</th>
+        <th>Tipe</th>
+        <th>Operasi</th>
+    </tr>
+</thead>
+<tbody>
+    {% for obj in objs %}
+    <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>{{ obj.study.name }}</td>
+        <td>
+            {{ obj.name }}
+        </td>
+        <td>{{ obj.year }}</td>
+        <td>{{ 'Reguler' if obj.type == 1 else 'Karyawan <span class="text-danger">*</span>'|safe if obj.type == 2 }}</td>
+        <td>
+            <button type="button" class="btn btn-sm btn-warning js-btn-update" data-href="{{url_for('admin.class_update', obj_id=obj.id)}}">
+                Edit
+            </button>
+            <button type="button" class="btn btn-sm btn-danger js-btn-delete" data-href="{{url_for('admin.class_delete', obj_id=obj.id)}}">
+                Hapus
+            </button>
+        </td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="6" class="bg-info text-center">No data.</td>
+    </tr>
+</tbody>
+{% endfor %}

@@ -1,0 +1,33 @@
+<thead class="thead-default">
+    <tr>
+        <th># ({{objs|length}})</th>
+        <th>Nama</th>
+        <th>Username</th>
+        <th>Tgl. Dibuat</th>
+        <th>Operasi</th>
+    </tr>
+</thead>
+<tbody>
+    {% for obj in objs %}
+    <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>
+            {{ obj.name }}
+        </td>
+        <td>{{ obj.username }}</td>
+        <td>{{ obj.date_created }}</td>
+        <td>
+            <button type="button" class="btn btn-sm btn-warning js-btn-update" data-href="{{url_for('admin.publisher_update', obj_id=obj.id)}}">
+                Edit
+            </button>
+            <button type="button" class="btn btn-sm btn-danger js-btn-delete" data-href="{{url_for('admin.publisher_delete', obj_id=obj.id)}}">
+                Hapus
+            </button>
+        </td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="5" class="bg-info text-center">No data.</td>
+    </tr>
+</tbody>
+{% endfor %}
