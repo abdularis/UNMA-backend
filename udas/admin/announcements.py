@@ -15,14 +15,16 @@ from flask import render_template, request, url_for, g, abort, send_from_directo
 
 from udas.ajaxutil import create_response, STAT_SUCCESS
 from udas.common import get_uploaded_file_folder, save_uploaded_file, overrides
-from udas.database import db_session
-from udas.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Study, Class
+from udas.repofactory import rf
+# from udas.database import db_session
+# from udas.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Study, Class
 from udas.login import LoginRequired
 from udas.crud import Crud, BaseCreateView, BaseReadView, BaseUpdateView, BaseDeleteView, Interceptor
 from udas.forms import AnnounceForm
 from udas.decorator import decorate_function
 from udas.htmlfilter import filter_html
 from udas import app
+from udas.repository import AnnouncementModel
 
 render_template = decorate_function(render_template, page='publish')
 
@@ -44,13 +46,10 @@ class AnnouncementModelView:
 
 def render_html_list_data():
     if g.is_admin:
-        results = db_session.query(Announcement).order_by(Announcement.id.desc()).all()
+        results = rf.annc_repo().get_all()
     else:
-        publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
-        results = db_session.query(Announcement) \
-            .filter(Announcement.publisher == publisher) \
-            .order_by(Announcement.id.desc()) \
-            .all()
+        publisher = rf.admin_repo().get_publisher_by_username(g.curr_user)
+        results = rf.annc_repo().get_by_publisher_id(publisher.id)
     results = [AnnouncementModelView(res) for res in results]
     return render_template('admin/partials/anc/announce_list.html', objs=results)
 
@@ -76,11 +75,11 @@ class CreateView(BaseCreateView):
 
     @overrides(BaseCreateView)
     def save_form(self, form):
-        anc = Announcement()
+        anc = AnnouncementModel()
         anc.public_id = str(uuid.uuid4())
         anc.date_created = time.time()
         anc.last_updated = anc.date_created
-        anc.publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+        anc.publisher_id = rf.admin_repo().get_publisher_by_username(g.curr_user).id
         anc.title = form.title.data
         anc.description = filter_html(form.description.data)
 
@@ -93,6 +92,7 @@ class CreateView(BaseCreateView):
                             Class.study_id == Study.id,
                             Student.class_id == Class.id) \
                     .all()
+            students = rf.student_repo().get_by_study_program()
         elif form.recv_type.data == 2:
             # Kelas
             students = \
@@ -171,7 +171,7 @@ class ReadView(BaseReadView):
 
     @overrides(BaseReadView)
     def render_detail(self, obj_id):
-        res = db_session.query(Announcement).filter(Announcement.public_id == str(obj_id)).first()
+        res = rf.annc_repo().get_by_public_id(str(obj_id))
         if res:
             return render_template('admin/announcement_detail.html', obj=AnnouncementModelView(res))
         return abort(404)
@@ -192,12 +192,11 @@ class DeleteView(BaseDeleteView):
         pass
 
     def delete_model(self, model):
-        db_session.delete(model)
-        db_session.commit()
+        rf.annc_repo().delete_by_id(model.id)
         return True, None
 
     def get_model(self, obj_id):
-        return db_session.query(Announcement).filter(Announcement.public_id == obj_id).first()
+        return rf.annc_repo().get_by_public_id(obj_id)
 
 
 CrudAnnouncement = Crud(

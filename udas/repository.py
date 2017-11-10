@@ -32,13 +32,26 @@ class BaseUser(BaseRepoModel):
 
 
 class StudyModel(BaseRepoModel):
-    def __init__(self):
+    classes_mapper = None
+
+    def __init__(self, id=None, name=''):
         super().__init__()
-        self.id = None
-        self.name = ''
+        self.id = id
+        self.name = name
+
+    @property
+    def classes(self):
+        return self.classes_mapper(self) if self.classes_mapper else None
+
+    class ClassesMapper:
+        def __call__(self, study_program):
+            return None
 
 
 class ClassModel(BaseRepoModel):
+    students_mapper = None
+    study_mapper = None
+
     def __init__(self):
         super().__init__()
         self.id = None
@@ -47,11 +60,37 @@ class ClassModel(BaseRepoModel):
         self.year = 0
         self.type = 0
 
+    @property
+    def students(self):
+        return self.students_mapper(self) if self.students_mapper else None
+
+    @property
+    def study(self):
+        return self.study_mapper(self) if self.study_mapper else None
+
+    class StudentMapper:
+        def __call__(self, cls):
+            return None
+
+    class StudyMapper:
+        def __call__(self, cls):
+            return None
+
 
 class StudentModel(BaseUser):
+    announcements_mapper = None
+
     def __init__(self, id=None, name='', username='', password='', date_created=None, last_login=None, class_id=None,):
         super().__init__(id, name, username, password, date_created, last_login)
         self.class_id = class_id
+
+    @property
+    def announcements(self):
+        return self.announcements_mapper(self) if self.announcements_mapper else None
+
+    class AnnouncementMapper:
+        def __call__(self, student):
+            return None
 
 
 class TokenModel(BaseRepoModel):
@@ -63,15 +102,25 @@ class TokenModel(BaseRepoModel):
 
 
 class AdminModel(BaseUser):
-    def __init__(self, id=None, name='', username='', password='', date_created=None, last_login=None, role='', studies=None):
+    permissions_mapper = None
+
+    def __init__(self, id=None, name='', username='', password='', date_created=None, last_login=None, role=''):
         super().__init__(id, name, username, password, date_created, last_login)
         self.role = role
-        self.static_studies = studies
-        self.dynamic_studies = None
+
+    @property
+    def permissions(self):
+        return self.permissions_mapper(self) if self.permissions_mapper else None
+
+    class PermissionsMapper:
+        def __call__(self, admin):
+            return None
 
 
 class AnnouncementModel(BaseRepoModel):
-    def __init__(self):
+    publisher_mapper = None
+
+    def __init__(self, id=None, public_id='', publisher_id=None, title='', description='', attachment=None, date_created=None, last_updated=None):
         super().__init__()
         self.id = None
         self.public_id = ''
@@ -81,6 +130,14 @@ class AnnouncementModel(BaseRepoModel):
         self.attachment = None
         self.date_created = None
         self.last_updated = None
+
+    @property
+    def publisher(self):
+        return self.publisher_mapper(self) if self.publisher_mapper else None
+
+    class PublisherMapper:
+        def __call__(self, announcement):
+            return None
 
 
 class BaseRepo:
@@ -169,13 +226,16 @@ class AdminRepo:
     def delete_by_id(self, obj_id):
         pass
 
-    def delete_all(self):
-        pass
-
 
 class AnnouncementRepo(BaseRepo):
 
-    def get_by_student(self, std):
+    def get_by_public_id(self, public_id):
+        pass
+
+    def get_by_student_id(self, std_id):
+        pass
+
+    def get_by_publisher_id(self, pub_id):
         pass
 
 

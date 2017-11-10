@@ -159,22 +159,23 @@ class AnnounceForm(FlaskForm):
         if recv_type:
             self.recv_type.data = recv_type
 
+        pub = rf.admin_repo().get_publisher_by_username(g.curr_user)
+
         if self.recv_type.data == 1:
             # Prodi
             if g.is_admin:
                 study_progs = rf.study_repo().get_all()
             else:
-                publisher = rf.admin_repo().get_publisher_by_username(g.curr_user)
-                study_progs = rf.admin_repo().get_allowed_study_programs(publisher)
+                study_progs = pub.permissions
             self.receiver.choices = [(obj.id, obj.name) for obj in study_progs]
         elif self.recv_type.data == 2:
             # Kelas
             if g.is_admin:
                 classes = rf.class_repo().get_all()
             else:
-                publisher = rf.admin_repo().get_publisher_by_username(g.curr_user)
-                study_progs = rf.admin_repo().get_allowed_study_programs(publisher)
-                classes = rf.class_repo().get_by_study_programs(study_progs)
+                classes = []
+                for study_prog in pub.permissions:
+                    classes.extend([cls for cls in study_prog.classes])
             self.receiver.choices = [(obj.id, obj.name) for obj in classes]
         elif self.recv_type.data == 3:
             if g.is_admin:
@@ -182,9 +183,8 @@ class AnnounceForm(FlaskForm):
                                          for obj in
                                          db_session.query(Student).all()]
             else:
-                pub = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
                 self.receiver.choices = []
-                for study in pub.studies:
+                for study in pub.permissions:
                     for cls in study.classes:
                         for student in cls.students:
                             self.receiver.choices.append((student.id, '%s - %s' % (student.username, student.name)))

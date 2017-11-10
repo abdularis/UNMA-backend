@@ -109,7 +109,7 @@ class UpdateView(BaseUpdateView):
             form.username.data = model.username
             form.password.render_kw = {'placeholder': 'Password disembunyikan!'}
             form.std_class.data = model.class_id
-            form.study_program.data = rf.study_repo().get_by_student(model).id
+            form.study_program.data = rf.study_repo().get_by_student_id(model).id
             return form
         else:
             return StudentForm(request.form, True, model.username)

@@ -16,8 +16,7 @@ render_template = decorate_function(render_template, page='study')
 def get_data_list():
     results = rf.study_repo().get_all()
     for res in results:
-        # ToDo
-        res.classes_count = 0
+        res.classes_count = len(res.classes)
     return results
 
 
@@ -77,6 +76,9 @@ class UpdateView(BaseUpdateView):
         if method == 'GET':
             form = StudyForm()
             form.name.data = model.name
+            for cls in model.classes:
+                for std in cls.students:
+                    print(std.name)
             return form
         else:
             return StudyForm(request.form, True, model.name)
