@@ -3,7 +3,7 @@
 
 from flask import g, flash
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed, FileRequired
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, IntegerField, SelectField, \
     SelectMultipleField, TextAreaField, ValidationError, RadioField
 from wtforms.validators import InputRequired
@@ -56,7 +56,7 @@ class StudyForm(FlaskForm):
     name = StringField('Nama', validators=[InputRequired(message="Nama tidak boleh kosong"),
                                            UniqueValue(Study, Study.name, message="Nama sudah ada. Tidak boleh sama!")])
 
-    def __init__(self, formdata=None, edit_mode=False, last_value=''):
+    def __init__(self, edit_mode=False, last_value=''):
         super().__init__(csrf_enabled=False)
         UniqueValue.set_edit_mode_on_field(self.name, edit_mode, last_value)
 
@@ -69,7 +69,7 @@ class ClassForm(FlaskForm):
                            coerce=int,
                            choices=[t for t in zip(ClassTypes.keys(), ClassTypes.values())])
 
-    def __init__(self, formdata=None):
+    def __init__(self):
         super().__init__(csrf_enabled=False)
         self.study_program.choices = [(obj.id, obj.name) for obj in db_session.query(Study).all()]
 
@@ -100,7 +100,7 @@ class StudentForm(FlaskForm):
                                                    UniqueValue(Student, Student.username, message="Username sudah ada. Tidak boleh sama!")])
     password = StringField('Password', validators=[SwitchableRequired()])
 
-    def __init__(self, formdata=None, edit_mode=False, last_value=None):
+    def __init__(self, edit_mode=False, last_value=None):
         super().__init__(csrf_enabled=False)
         self.study_program.data = 0
         self.study_program.choices = self.get_study_prog_option()
@@ -135,7 +135,7 @@ class PublisherForm(FlaskForm):
     password = StringField('Password', validators=[SwitchableRequired()])
     allowed_study_program = SelectMultipleField('Izin Publish Ke', validators=[InputRequired()], coerce=int, choices=[])
 
-    def __init__(self, formdata=None, edit_mode=None, last_value=None):
+    def __init__(self, edit_mode=None, last_value=None):
         super().__init__(csrf_enabled=False)
         self.allowed_study_program.choices = [(obj.id, obj.name) for obj in db_session.query(Study).all()]
         self.password.validators[0].enable = not edit_mode

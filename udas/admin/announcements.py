@@ -8,12 +8,13 @@ import logging
 import os
 
 import requests
+from flask.views import MethodView
 
 import udas.fcm as fcm
 
 from flask import render_template, request, url_for, g, abort, send_from_directory, flash
 
-from udas.ajaxutil import create_response, STAT_SUCCESS
+from udas.ajaxutil import create_response, STAT_SUCCESS, STAT_INVALID, STAT_ERROR
 from udas.common import get_uploaded_file_folder, save_uploaded_file, overrides
 from udas.database import db_session
 from udas.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Study, Class
@@ -55,75 +56,68 @@ def render_html_list_data():
     return render_template('admin/partials/anc/announce_list.html', objs=results)
 
 
-class CreateView(BaseCreateView):
+class _CreateView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
-    def __init__(self):
-        super().__init__(render_html_list_data, get_interceptor=Interceptor(self.intercept_get))
-
-    def intercept_get(self):
+    def get(self):
         if 'recvtype' in request.args:
             recv_type = int(request.args['recvtype'])
             form = AnnounceForm(recv_type=recv_type)
-            html_result = render_template('admin/partials/anc/announce_receiver_selection.html',
-                                          obj=form.receiver)
-            return False, create_response(STAT_SUCCESS, html_extra=html_result)
-        return True, None
+            return render_template('admin/partials/anc/announce_receiver_selection.html', obj=form.receiver)
+        form = AnnounceForm()
+        return create_response(STAT_SUCCESS, html_form=self.render_form(form))
 
-    @overrides(BaseCreateView)
-    def create_form(self, method):
-        return AnnounceForm()
+    def post(self):
+        form = AnnounceForm()
+        if form.validate_on_submit():
+            anc = Announcement()
+            anc.public_id = str(uuid.uuid4())
+            anc.date_created = time.time()
+            anc.last_updated = anc.date_created
+            anc.publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+            anc.title = form.title.data
+            anc.description = filter_html(form.description.data)
 
-    @overrides(BaseCreateView)
-    def save_form(self, form):
-        anc = Announcement()
-        anc.public_id = str(uuid.uuid4())
-        anc.date_created = time.time()
-        anc.last_updated = anc.date_created
-        anc.publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
-        anc.title = form.title.data
-        anc.description = filter_html(form.description.data)
-
-        students = []
-        if form.recv_type.data == 1:
-            # Prodi
-            students = \
-                db_session.query(Student) \
+            students = []
+            if form.recv_type.data == 1:
+                # Prodi
+                students = db_session.query(Student) \
                     .filter(Study.id.in_(form.receiver.data),
                             Class.study_id == Study.id,
                             Student.class_id == Class.id) \
                     .all()
-        elif form.recv_type.data == 2:
-            # Kelas
-            students = \
-                db_session.query(Student) \
+            elif form.recv_type.data == 2:
+                # Kelas
+                students = db_session.query(Student) \
                     .filter(Student.class_id.in_(form.receiver.data)) \
                     .all()
-        elif form.recv_type.data == 3:
-            # Mhs
-            students = \
-                db_session.query(Student) \
+            elif form.recv_type.data == 3:
+                # Mhs
+                students = db_session.query(Student) \
                     .filter(Student.id.in_(form.receiver.data)) \
                     .all()
 
-        for student in students:
-            assoc = StudentAnnouncementAssoc()
-            assoc.student = student
-            assoc.announcement = anc
-            anc.students.append(assoc)
-        attachment_filename = save_uploaded_file(anc.public_id, form.attachment.data)
-        if attachment_filename:
-            anc.attachment = attachment_filename
-        db_session.add(anc)
-        db_session.commit()
-        flash('Pengumuman berhasil di publish!', category='succ')
+            for student in students:
+                assoc = StudentAnnouncementAssoc()
+                assoc.student = student
+                assoc.announcement = anc
+                anc.students.append(assoc)
+            attachment_filename = save_uploaded_file(anc.public_id, form.attachment.data)
+            if attachment_filename:
+                anc.attachment = attachment_filename
+            db_session.add(anc)
+            db_session.commit()
+            flash('Pengumuman berhasil di publish!', category='succ')
 
-        self.send_notification(anc, students)
+            self.send_notification(anc, students)
 
-        return True, render_template('admin/partials/anc/announce_save_notif.html')
+            html_extra_msg = render_template('admin/partials/anc/announce_save_notif.html')
+            return create_response(STAT_SUCCESS, html_list=render_html_list_data(), html_extra=html_extra_msg)
+        else:
+            return create_response(STAT_INVALID, html_form=self.render_form(form))
 
-    @overrides(BaseCreateView)
-    def render_form(self, form):
+    @staticmethod
+    def render_form(form):
         return render_template(
             'admin/partials/anc/announce_form.html',
             form=form,
@@ -132,7 +126,8 @@ class CreateView(BaseCreateView):
             form_id='newForm',
             btn_primary='Publish')
 
-    def send_notification(self, anc, students):
+    @staticmethod
+    def send_notification(anc, students):
         reg_ids = db_session.query(StudentToken.fcm_token) \
             .filter(StudentToken.student_id.in_([std.id for std in students])).all()
         if reg_ids:
@@ -152,59 +147,58 @@ class CreateView(BaseCreateView):
                 flash('Error koneksi ke firebase: gagal mengirim notifikasi ke pengguna!', category='warn')
 
 
-class ReadView(BaseReadView):
+class _ReadView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
-    def __init__(self):
-        super().__init__(get_interceptor=Interceptor(self.intercept_get))
+    def get(self, obj_id=None):
+        if request.args.get('act') == 'list':
+            return create_response(STAT_SUCCESS, html_list=render_html_list_data())
+        elif obj_id:
+            if request.args.get('file'):
+                file_folder = get_uploaded_file_folder(str(obj_id))
+                if os.path.exists(file_folder):
+                    return send_from_directory(file_folder, request.args['file'])
 
-    def intercept_get(self, *args, **kwargs):
-        if kwargs.get('obj_id') and request.args.get('file'):
-            file_folder = get_uploaded_file_folder(str(kwargs['obj_id']))
-            if os.path.exists(file_folder):
-                return False, send_from_directory(file_folder, request.args['file'])
-        return True, None
-
-    @overrides(BaseReadView)
-    def render_list(self):
-        return render_html_list_data()
-
-    @overrides(BaseReadView)
-    def render_detail(self, obj_id):
-        res = db_session.query(Announcement).filter(Announcement.public_id == str(obj_id)).first()
-        if res:
-            return render_template('admin/announcement_detail.html', obj=AnnouncementModelView(res))
-        return abort(404)
-
-    @overrides(BaseReadView)
-    def render_container(self):
+            res = db_session.query(Announcement).filter(Announcement.public_id == str(obj_id)).first()
+            if res:
+                return render_template('admin/announcement_detail.html', obj=AnnouncementModelView(res))
+            return abort(404)
         return render_template('admin/announcements.html')
 
 
-class UpdateView(BaseUpdateView):
+class _UpdateView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
 
-class DeleteView(BaseDeleteView):
+class _DeleteView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
-    def render_delete_form(self, model):
-        pass
+    def get(self, obj_id):
+        # ToDo implement delete operation
+        # model = self.get_announcement(obj_id)
+        # if model:
+        #     return create_response(STAT_SUCCESS,
+        #                            html_form=self.render_delete_form(model=model))
+        return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
-    def delete_model(self, model):
-        db_session.delete(model)
-        db_session.commit()
-        return True, None
+    def post(self, obj_id):
+        model = self.get_announcement(obj_id)
+        if model:
+            db_session.delete(model)
+            db_session.commit()
+            return create_response(STAT_SUCCESS, html_list=render_html_list_data())
+        return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
-    def get_model(self, obj_id):
-        return db_session.query(Announcement).filter(Announcement.public_id == obj_id).first()
+    @staticmethod
+    def get_announcement(anc_public_id):
+        return db_session.query(Announcement).filter(Announcement.public_id == anc_public_id).first()
 
 
 CrudAnnouncement = Crud(
     'announcement', 'announcements',
-    CreateView,
-    ReadView,
-    UpdateView,
-    DeleteView,
+    _CreateView,
+    _ReadView,
+    _UpdateView,
+    _DeleteView,
     url_param_t='uuid'
 )
