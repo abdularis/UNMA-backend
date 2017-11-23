@@ -30,7 +30,10 @@
 <script type="text/javascript" src="{{ url_for('static', filename='js/me/listloader.js') }}"></script>
 <script type="text/javascript">
 $(function() {
-    listLoader("{{ url_for('admin.publisher_read', act='list') }}", ".js-dynamic-table")
+    listLoader("{{ url_for('admin.publisher_read', act='list') }}", ".js-dynamic-table", function(){
+        addCallbackToJsBtnUpdate();
+        addCallbackToJsBtnDelete();
+    })
 })
 </script>
 {% endblock %}

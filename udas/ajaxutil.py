@@ -29,3 +29,30 @@ def create_response(status, html_form=None, html_list=None, html_error=None, htm
             html_error=html_error,
             html_extra=html_extra)
     return make_response(json, scode)
+
+
+def success_response(html_form=None, html_list=None, html_error=None, html_extra=None, scode=200):
+    return create_response(STAT_SUCCESS,
+                           html_form=html_form,
+                           html_list=html_list,
+                           html_error=html_error,
+                           html_extra=html_extra,
+                           scode=scode)
+
+
+def invalid_response(html_form=None, html_list=None, html_error=None, html_extra=None, scode=200):
+    return create_response(STAT_INVALID,
+                           html_form=html_form,
+                           html_list=html_list,
+                           html_error=html_error,
+                           html_extra=html_extra,
+                           scode=scode)
+
+
+def error_response(html_form=None, html_list=None, html_error=None, html_extra=None, scode=200):
+    return create_response(STAT_ERROR,
+                           html_form=html_form,
+                           html_list=html_list,
+                           html_error=html_error,
+                           html_extra=html_extra,
+                           scode=scode)

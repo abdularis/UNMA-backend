@@ -12,6 +12,14 @@
     <div class="card">
         <div class="card-header"><h3>Admin Login</h3></div>
         <form method="post" class="card-body">
+            {% with messages = get_flashed_messages() %}
+            {% for msg in messages %}
+            <div class="alert alert-danger">
+                {{ msg }}
+            </div>
+            {% endfor %}
+            {% endwith %}
+
             {% from 'includes/_form_helpers.html' import render_field %}
             {{ form.csrf_token }}
             {{ render_field(form.username) }}

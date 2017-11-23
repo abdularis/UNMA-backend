@@ -1,24 +1,60 @@
 # study.py
 # Created by abdularis on 18/10/17
 
-from flask import render_template, request, url_for
+from flask import render_template, request, url_for, flash
 from flask.views import MethodView
+from flask_wtf import FlaskForm
+from wtforms import SelectField, StringField, IntegerField
+from wtforms.validators import InputRequired
 
 from udas.ajaxutil import create_response, STAT_SUCCESS, STAT_INVALID, STAT_ERROR
+from udas.common import decorate_function, CrudRouter
 from udas.database import db_session
-from udas.models import Class
-from udas.login import AdminRequired
-from udas.crud import Crud, BaseCreateView, BaseReadView, BaseUpdateView, BaseDeleteView
-from udas.forms import ClassForm
-from udas.decorator import decorate_function
+from udas.models import Class, ClassTypes, Study
+from udas.session import AdminRequired
 
 
 render_template = decorate_function(render_template, page='class')
 
 
+class ClassForm(FlaskForm):
+    study_program = SelectField('Prodi', validators=[InputRequired()], coerce=int, choices=[])
+    name = StringField('Nama', validators=[InputRequired(message='Name harus diisi')])
+    year = IntegerField('Tahun', validators=[InputRequired(message='Tahun harus diisi')])
+    cls_type = SelectField('Tipe Kelas', validators=[InputRequired()],
+                           coerce=int,
+                           choices=[t for t in zip(ClassTypes.keys(), ClassTypes.values())])
+
+    def __init__(self):
+        super().__init__(csrf_enabled=False)
+        self.study_program.choices = [(obj.id, obj.name) for obj in db_session.query(Study).all()]
+
+    def validate(self):
+        valid = super().validate()
+        if not valid:
+            return False
+
+        res = db_session.query(Class) \
+            .filter(Class.study_id == self.study_program.data,
+                    Class.name == self.name.data,
+                    Class.year == self.year.data,
+                    Class.type == self.cls_type.data) \
+            .first()
+        if res:
+            flash('Data kelas "%s %s %s %d" sudah ada.' %
+                  (dict(self.study_program.choices).get(self.study_program.data),
+                   self.name.data, ClassTypes.get(self.cls_type.data), self.year.data))
+            return False
+        return True
+
+
 def render_html_data_list():
     results = db_session.query(Class).all()
     return render_template('admin/partials/cls/class_list.html', objs=results)
+
+
+def get_class(obj_id):
+    return db_session.query(Class).filter(Class.id == obj_id).first()
 
 
 class _CreateView(MethodView):
@@ -65,7 +101,7 @@ class _UpdateView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self, obj_id):
-        model = self.get_class(obj_id)
+        model = get_class(obj_id)
         if model:
             form = ClassForm()
             form.name.data = model.name
@@ -76,7 +112,7 @@ class _UpdateView(MethodView):
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
     def post(self, obj_id):
-        model = self.get_class(obj_id)
+        model = get_class(obj_id)
         if model:
             form = ClassForm()
             if form.validate_on_submit():
@@ -88,10 +124,6 @@ class _UpdateView(MethodView):
                 return create_response(STAT_SUCCESS, html_list=render_html_data_list())
             return create_response(STAT_INVALID, html_form=self.render_form(form, obj_id=obj_id))
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
-
-    @staticmethod
-    def get_class(obj_id):
-        return db_session.query(Class).filter(Class.id == obj_id).first()
 
     @staticmethod
     def render_form(form, obj_id):
@@ -108,26 +140,22 @@ class _DeleteView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self, obj_id):
-        model = self.get_class(obj_id)
+        model = get_class(obj_id)
         if model:
             return create_response(STAT_SUCCESS,
                                    html_form=render_template('admin/partials/cls/class_delete.html', obj=model))
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
     def post(self, obj_id):
-        model = self.get_class(obj_id)
+        model = get_class(obj_id)
         if model:
             db_session.delete(model)
             db_session.commit()
             return create_response(STAT_SUCCESS, html_list=render_html_data_list())
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
-    @staticmethod
-    def get_class(obj_id):
-        return db_session.query(Class).filter(Class.id == obj_id).first()
 
-
-CrudClass = Crud(
+CrudClass = CrudRouter(
     'class', 'classes',
     _CreateView,
     _ReadView,

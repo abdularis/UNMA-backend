@@ -31,8 +31,15 @@
 
         <div class="alertContainer"></div>
 
-        <div id="mainContent">
+        <div class="js-dynamic-table">
             {% include 'admin/partials/anc/announce_list.html' %}
+        </div>
+    </div>
+
+    <div id="formModal" class="modal fade" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            </div>
         </div>
     </div>
 
@@ -42,10 +49,14 @@
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/summernote.css') }}">
 <script type="text/javascript" src="{{ url_for('static', filename='js/summernote.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/lang/summernote-id-ID.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/me/crud.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/me/listloader.js') }}"></script>
 
 <script type="text/javascript">
-$(listLoader("{{ url_for('admin.announcement_read', act='list') }}", "#mainContent"))
+$(listLoader("{{ url_for('admin.announcement_read', act='list') }}", ".js-dynamic-table", function(){
+    addCallbackToJsBtnUpdate();
+    addCallbackToJsBtnDelete();
+}));
 
 function scrollToForm() {
     var tag = $('a[name=formContainer]')
@@ -115,7 +126,7 @@ function registerAsyncFormSubmission(form_selector) {
                 if (data.status == 'success') {
                     $('#formContainer').collapse('hide')
                     $('.alertContainer').html(data.html_extra)
-                    $('#mainContent').html(data.html_list)
+                    $('.js-dynamic-table').html(data.html_list)
                 } else if (data.status == 'invalid') {
                     $('#formContainer').html(data.html_form)
                 } else {

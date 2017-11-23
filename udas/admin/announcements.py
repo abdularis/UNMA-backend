@@ -6,26 +6,85 @@ import time
 import datetime
 import logging
 import os
-
 import requests
-from flask.views import MethodView
-
-import udas.fcm as fcm
 
 from flask import render_template, request, url_for, g, abort, send_from_directory, flash
+from flask.views import MethodView
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField
+from wtforms import StringField, TextAreaField, RadioField, SelectMultipleField
+from wtforms.validators import InputRequired
 
+import udas.fcm as fcm
 from udas.ajaxutil import create_response, STAT_SUCCESS, STAT_INVALID, STAT_ERROR
-from udas.common import get_uploaded_file_folder, save_uploaded_file, overrides
+from udas.common import get_uploaded_file_folder, save_uploaded_file, decorate_function, CrudRouter
 from udas.database import db_session
 from udas.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Study, Class
-from udas.login import LoginRequired
-from udas.crud import Crud, BaseCreateView, BaseReadView, BaseUpdateView, BaseDeleteView, Interceptor
-from udas.forms import AnnounceForm
-from udas.decorator import decorate_function
+from udas.session import LoginRequired
 from udas.htmlfilter import filter_html
 from udas import app
 
 render_template = decorate_function(render_template, page='publish')
+
+
+class AnnounceForm(FlaskForm):
+    title = StringField('Judul', validators=[InputRequired()])
+    description = TextAreaField('Deskripsi/Isi')
+    recv_type = RadioField('Tipe Penerima', validators=[InputRequired()],
+                           coerce=int, choices=[(1, 'Prodi'), (2, 'Kelas'), (3, 'Mahasiswa')],
+                           default=1)
+    receiver = SelectMultipleField('Penerima',
+                                   validators=[InputRequired()],
+                                   coerce=int, choices=[])
+    attachment = FileField('Attachment',
+                           validators=[FileAllowed(['png', 'jpg', 'jpeg', 'bmp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'],
+                                                    'Tipe file tidak didukung.')])
+
+    def fill_receiver_with_study_progs(self):
+        if g.is_admin:
+            self.receiver.choices = [(obj.id, obj.name) for obj in db_session.query(Study).all()]
+        else:
+            publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+            self.receiver.choices = [(obj.id, obj.name) for obj in publisher.studies]
+
+    def fill_receiver_with_classes(self):
+        if g.is_admin:
+            self.receiver.choices = [(obj.id, str(obj))
+                                     for obj in
+                                     db_session.query(Class).order_by(Class.year.asc(), Class.study_id.asc()).all()]
+        else:
+            pub = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+            self.receiver.choices = []
+            for study in pub.studies:
+                [self.receiver.choices.append((obj.id, str(obj))) for obj in study.classes]
+
+    def fill_receiver_with_students(self):
+        if g.is_admin:
+            self.receiver.choices = [(obj.id, '%s - %s' % (obj.username, obj.name))
+                                     for obj in
+                                     db_session.query(Student).all()]
+        else:
+            pub = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+            self.receiver.choices = []
+            for study in pub.studies:
+                for cls in study.classes:
+                    for student in cls.students:
+                        self.receiver.choices.append((student.id, '%s - %s' % (student.username, student.name)))
+
+    def __init__(self, recv_type=None):
+        super().__init__(csrf_enabled=False)
+        if recv_type:
+            self.recv_type.data = recv_type
+
+        if self.recv_type.data == 1:
+            # Prodi
+            self.fill_receiver_with_study_progs()
+        elif self.recv_type.data == 2:
+            # Kelas
+            self.fill_receiver_with_classes()
+        elif self.recv_type.data == 3:
+            # Students
+            self.fill_receiver_with_students()
 
 
 class AnnouncementModelView:
@@ -56,6 +115,10 @@ def render_html_list_data():
     return render_template('admin/partials/anc/announce_list.html', objs=results)
 
 
+def get_announcement(anc_public_id):
+    return db_session.query(Announcement).filter(Announcement.public_id == str(anc_public_id)).first()
+
+
 class _CreateView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
@@ -63,7 +126,8 @@ class _CreateView(MethodView):
         if 'recvtype' in request.args:
             recv_type = int(request.args['recvtype'])
             form = AnnounceForm(recv_type=recv_type)
-            return render_template('admin/partials/anc/announce_receiver_selection.html', obj=form.receiver)
+            html_data = render_template('admin/partials/anc/announce_receiver_selection.html', obj=form.receiver)
+            return create_response(STAT_SUCCESS, html_extra=html_data)
         form = AnnounceForm()
         return create_response(STAT_SUCCESS, html_form=self.render_form(form))
 
@@ -133,7 +197,7 @@ class _CreateView(MethodView):
         if reg_ids:
             f = fcm.FcmNotification(app.config['FCM_SERVER_KEY'])
             try:
-                responses = f.send([obj[0] for obj in reg_ids], {'title': anc.title})
+                responses = f.send([obj[0] for obj in reg_ids], data={'title': anc.title})
                 for status_code, resp_msg in responses:
                     if status_code == 200 and len(resp_msg.results) > 0:
                         error = resp_msg.results[0][1].get('error')
@@ -169,32 +233,31 @@ class _ReadView(MethodView):
 class _UpdateView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
+    def get(self, obj_id):
+        # ToDo Implement update on announcement
+        return create_response(STAT_ERROR, html_error='<div class="modal-body">Not implemented yet</div>')
+
 
 class _DeleteView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
     def get(self, obj_id):
-        # ToDo implement delete operation
-        # model = self.get_announcement(obj_id)
-        # if model:
-        #     return create_response(STAT_SUCCESS,
-        #                            html_form=self.render_delete_form(model=model))
+        model = get_announcement(obj_id)
+        if model:
+            return create_response(STAT_SUCCESS,
+                                   html_form=render_template('admin/partials/anc/announce_delete.html', obj=model))
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
     def post(self, obj_id):
-        model = self.get_announcement(obj_id)
+        model = get_announcement(obj_id)
         if model:
             db_session.delete(model)
             db_session.commit()
             return create_response(STAT_SUCCESS, html_list=render_html_list_data())
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
-    @staticmethod
-    def get_announcement(anc_public_id):
-        return db_session.query(Announcement).filter(Announcement.public_id == anc_public_id).first()
 
-
-CrudAnnouncement = Crud(
+CrudAnnouncement = CrudRouter(
     'announcement', 'announcements',
     _CreateView,
     _ReadView,

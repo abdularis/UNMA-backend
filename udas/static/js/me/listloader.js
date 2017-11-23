@@ -1,4 +1,4 @@
-function listLoader(url, output_container) {
+function listLoader(url, output_container, on_success) {
     $.ajax({
         url: url,
         type: 'get',
@@ -10,8 +10,8 @@ function listLoader(url, output_container) {
         success: function(data) {
             if (data.status != 'error') {
                 $(output_container).html(data.html_list)
-                addCallbackToJsBtnUpdate();
-                addCallbackToJsBtnDelete();
+                if (on_success)
+                    on_success()
             } else {
                 $(output_container).html(data.html_error)
             }

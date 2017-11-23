@@ -1,0 +1,11 @@
+<div class="modal-header">
+    <h3 class="modal-title text-danger">Apakah anda yakin ingin menghapus <b>"{{obj.title}}"</b>?</h3>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+</div>
+<form method="post" id="deleteForm" action="{{ url_for('admin.announcement_delete', obj_id=obj.public_id) }}">
+    <div class="modal-footer">
+        <img class="img-progress" src="{{ url_for('static', filename='images/progress.gif') }}" width="42" height="42" style="display: none"></img>
+        <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Batal</button>
+        <button type="submit" class="btn btn-sm btn-danger btn-ok announcement_delete">Hapus</button>
+    </div>
+</form>

@@ -81,40 +81,21 @@ class AdminRequired(ParamDecorator):
             return redirect(url_for(self.redirect_failed))
 
 
-class LoginManager:
+class SessionManager:
 
     @staticmethod
-    def login(account_getter, account_verifier, account_id, password):
-        """
-        Do login
-
-        :param account_getter: callable object untuk mendapatkan account berdasarkan account_id
-        :param account_verifier: callable object untuk verifikasi account yang telah didapatkan
-                                    dari account_getter dan return dictionary
-                                    {'success': True | False, 'is_admin'= True | False}
-        :param account_id: unique identifier untuk account yang akan diambil dari callable account_getter
-        :param password: password associated with account_id
-        :return: True if login success False otherwise
-        """
-
-        if callable(account_getter) and callable(account_verifier):
-            account = account_getter(account_id)
-            if account:
-                result = account_verifier(account, password)
-                if result.get('success'):
-                    is_admin = bool(result.get('is_admin'))
-                    session[_sv_is_login] = True
-                    session[_sv_is_admin] = is_admin
-                    session[_sv_user_id] = account_id
-                    _populates_global_var()
-                    return True
-        return False
+    def set_session(admin):
+        session[_sv_is_login] = True
+        session[_sv_is_admin] = bool(admin.role == 'ADM')
+        session[_sv_user_id] = admin.username
+        _populates_global_var()
 
     @staticmethod
-    def logout():
+    def clear_session():
         if not session[_sv_is_login]:
             return False
         session.pop(_sv_is_login, None)
         session.pop(_sv_is_admin, None)
         session.pop(_sv_user_id, None)
+        _populates_global_var()
         return True

@@ -4,7 +4,7 @@
 from flask import render_template, g
 from flask.views import View
 
-from udas.login import LoginRequired
+from udas.session import LoginRequired
 
 
 class IndexView(View):

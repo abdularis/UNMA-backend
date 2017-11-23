@@ -75,7 +75,7 @@ class Class(BaseTable):
     study_id = Column(Integer, ForeignKey('studies.id'))
     name = Column(String(10))
     year = Column(Integer)
-    type = Column(Integer)
+    type = Column(Integer)    
 
     study = relationship('Study', back_populates='classes')
     students = relationship('Student', back_populates='my_class',

@@ -1,6 +1,6 @@
 # auth.py
 # Created by abdularis on 19/10/17
-
+import datetime
 import functools
 import jwt
 
@@ -10,6 +10,17 @@ from udas import app
 from udas.database import db_session
 from udas.models import StudentToken
 from .response import unauth_response
+
+
+def create_access_token(user_id, username):
+    payload = {
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30),
+        'iat': datetime.datetime.utcnow(),
+        'uid': user_id,
+        'unm': username
+    }
+    token = jwt.encode(payload, app.config.get('SECRET_KEY')).decode('utf-8')
+    return token, payload
 
 
 def token_required(f):

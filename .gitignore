@@ -1,1 +1,6 @@
-instance/uploads/
+instance/*
+.idea/*
+__pycache__/*
+udas/__pycache__/*
+udas/admin/__pycache__/*
+udas/api/__pycache__/*

@@ -2,39 +2,45 @@
 # Created by abdularis on 19/10/17
 
 import datetime
-import jwt
 
 from flask import request, g
 from flask.views import MethodView
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField
+from wtforms.validators import InputRequired
 
-from udas import app
 from udas.database import db_session
 from udas.models import Student, StudentToken
-from .auth import token_required
+from .authutil import token_required, create_access_token
 from .response import create_response, unauth_response
+
+
+class LoginForm(FlaskForm):
+    username = StringField(validators=[InputRequired()])
+    password = PasswordField(validators=[InputRequired()])
+    fcm_token = StringField()
+
+    def __init__(self):
+        super().__init__(csrf_enabled=False)
 
 
 class ClientAuthentication(MethodView):
 
     def post(self):
-        if request.form.get('username') and request.form.get('password'):
+        form = LoginForm()
+        if form.validate_on_submit():
             student = db_session.query(Student)\
-                .filter(Student.username == request.form.get('username'))\
+                .filter(Student.username == form.username.data)\
                 .first()
 
-            if student and student.verify_password(request.form.get('password')):
-                payload = {
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30),
-                    'iat': datetime.datetime.utcnow(),
-                    'uid': student.id,
-                    'unm': student.username
-                }
+            if student and student.verify_password(form.password.data):
+                token, payload = create_access_token(student.id, student.username)
                 student.last_login = datetime.datetime.utcnow()
-                token = jwt.encode(payload, app.config.get('SECRET_KEY')).decode('utf-8')
+
                 stud_token = StudentToken()
                 stud_token.student_id = student.id
                 stud_token.acc_token = token
-                stud_token.fcm_token = request.form.get('fcm_token')
+                stud_token.fcm_token = form.fcm_token.data
                 db_session.query(StudentToken).filter(StudentToken.student_id == student.id).delete()
                 db_session.add(stud_token)
                 db_session.commit()

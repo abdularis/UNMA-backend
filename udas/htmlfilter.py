@@ -1,8 +1,15 @@
 # htmlfilter.py
 # Created by abdularis on 22/10/17
+import mimetypes
 
 import bleach
 import bs4
+import io
+import base64
+from PIL import Image
+
+MAX_IMAGE_WIDTH = 1000
+DEFAULT_IMAGE_QUALITY = 55
 
 ALLOWED_TAGS = [
     'blockquote',
@@ -36,12 +43,16 @@ ALLOWED_STYLE = [
 
 
 def filter_attributes(tag, name, value):
+    """Filter attribute
+
+        allowed attributes are 'style', 'width' and 'height'
+        if the 'style' attribute has a property width & height in % the allow it,
+        otherwise ignore this attribute
+    """
     if name.lower() == 'style':
         styles = [s.lower().strip() for s in value.split(';') if s]
         for style in styles:
             pair = [s.strip() for s in style.split(':')]
-            if tag == 'table':
-                print(pair)
             if len(pair) >= 2 and (pair[0] == 'width' or pair[0] == 'height'):
                 return pair[1].endswith('%')
         else:
@@ -60,6 +71,7 @@ ALLOWED_PROTO = [
     'data'
 ]
 
+# this css style is for styling html in client side/android web view
 css_style_common = """
 html {
     font-family: sans-serif;
@@ -71,6 +83,7 @@ img {
 }
 """
 
+# this css style is for styling html in client side/android web view
 css_style_table = """
 table {
   border-spacing: 0;
@@ -136,6 +149,37 @@ cleaner = bleach.Cleaner(
 )
 
 
+def resize_image(image, scale_down_perc, quality):
+    img_format = image.format
+    if image.mode == 'RGB':
+        img_format = "JPEG"
+    if scale_down_perc < 100:
+        new_size = tuple([int(elm / 100 * scale_down_perc) for elm in image.size])
+        image = image.resize(new_size, Image.ANTIALIAS)
+    new_resized_image = io.BytesIO()
+
+    image.save(new_resized_image, format=img_format, optimize=True, quality=quality)
+    return mimetypes.types_map.get('.{}'.format(img_format).lower()), new_resized_image
+
+
+def resize_image_in_img_tag(img_tag):
+    src = img_tag.get('src')
+    if src:
+        base64_img = src.split(',', 1)[1]
+        bytes_img = base64.b64decode(base64_img)
+
+        pil_image = Image.open(io.BytesIO(bytes_img))
+        perc_scale = 95
+        if pil_image.size[0] > MAX_IMAGE_WIDTH:
+            perc_scale = MAX_IMAGE_WIDTH / pil_image.size[0] * 100
+
+        mime, new_bytes_img = resize_image(pil_image, perc_scale, DEFAULT_IMAGE_QUALITY)
+
+        info = 'data:%s;base64' % mime
+        new_img_src = '{},{}'.format(info, str(base64.b64encode(new_bytes_img.getvalue()), 'utf-8'))
+        img_tag['src'] = new_img_src
+
+
 def filter_html(html):
     doc = cleaner.clean(html)
     soup = bs4.BeautifulSoup(doc, 'html.parser')
@@ -146,7 +190,11 @@ def filter_html(html):
         if img.get('style'):
             style += img.get('style')
         img['style'] = style
-        print(img.get('style'))
+
+        try:
+            resize_image_in_img_tag(img)
+        except:
+            print("Failed to resize an image")
 
     # style_tag = bs4.Tag(name='style')
     # style_tag.string = "img{max-width: 100%;max-height: 100%;}"

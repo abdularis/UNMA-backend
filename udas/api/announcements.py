@@ -3,10 +3,10 @@
 
 import os
 
-from flask import request, g, send_from_directory, abort, url_for
+from flask import request, g, send_from_directory, abort, url_for, make_response
 from flask.views import MethodView
 
-from udas.api.auth import token_required
+from udas.api.authutil import token_required
 from udas.api.response import create_response
 from udas.common import get_uploaded_file_folder, get_uploaded_file_properties
 from udas.database import db_session
@@ -21,8 +21,8 @@ class AnnouncementDescription(MethodView):
                     .filter(Announcement.public_id == str(pub_id))\
                     .first()
         if result:
-            return create_response(True, data=result[0])
-        return create_response(False, message='Description not found!', s_code=404)
+            return result[0]
+        return make_response('Description not found!', 404)
 
 
 class AttachmentDownload(MethodView):
@@ -72,7 +72,7 @@ class AnnouncementList(MethodView):
 
                 results = db_session.query(StudentAnnouncementAssoc.read, Announcement) \
                     .filter(*filters) \
-                    .order_by(Announcement.id.desc()) \
+                    .order_by(Announcement.last_updated.desc()) \
                     .limit(limit) \
                     .offset(offset) \
                     .all()
@@ -80,18 +80,18 @@ class AnnouncementList(MethodView):
         if not results:
             results = db_session.query(StudentAnnouncementAssoc.read, Announcement) \
                 .filter(*filters) \
-                .order_by(Announcement.id.desc()) \
+                .order_by(Announcement.last_updated.desc()) \
                 .all()
 
-        data = None
+        data = []
         if results and len(results) > 0:
-            data = []
             for read, announcement in results:
                 ann_json = self.build_announcement_json_object(read, announcement)
                 data.append(ann_json)
         return create_response(True, data=data)
 
-    def build_announcement_json_object(self, read, announcement):
+    @staticmethod
+    def build_announcement_json_object(read, announcement):
         obj = {
             'id': announcement.public_id,
             'title': announcement.title,
@@ -120,7 +120,3 @@ class AnnouncementList(MethodView):
                                                _external=True)
 
         return obj
-
-
-
-

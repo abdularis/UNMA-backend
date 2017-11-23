@@ -3,17 +3,29 @@
 
 from flask import render_template, request, url_for
 from flask.views import MethodView
+from flask_wtf import FlaskForm
+from wtforms import StringField
+from wtforms.validators import InputRequired
 
+from udas.admin.wtformutil import UniqueValue
 from udas.ajaxutil import STAT_SUCCESS, create_response, STAT_ERROR, STAT_INVALID
+from udas.common import decorate_function, CrudRouter
 from udas.database import db_session
 from udas.models import Study
-from udas.login import AdminRequired
-from udas.crud import Crud, BaseCreateView, BaseUpdateView, BaseReadView, BaseDeleteView
-from udas.forms import StudyForm
-from udas.decorator import decorate_function
+from udas.session import AdminRequired
 
 
 render_template = decorate_function(render_template, page='study')
+
+
+class StudyForm(FlaskForm):
+
+    name = StringField('Nama', validators=[InputRequired(message="Nama tidak boleh kosong"),
+                                           UniqueValue(Study, Study.name, message="Nama sudah ada. Tidak boleh sama!")])
+
+    def __init__(self, edit_mode=False, last_value=''):
+        super().__init__(csrf_enabled=False)
+        UniqueValue.set_edit_mode_on_field(self.name, edit_mode, last_value)
 
 
 def get_data_list():
@@ -25,6 +37,10 @@ def get_data_list():
 
 def render_html_data_list():
     return render_template('admin/partials/sp/studyprogram_list.html', objs=get_data_list())
+
+
+def get_study_program(obj_id):
+    return db_session.query(Study).filter(Study.id == obj_id).first()
 
 
 class _CreateView(MethodView):
@@ -69,7 +85,7 @@ class _UpdateView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self, obj_id):
-        model = self.get_study_program(obj_id)
+        model = get_study_program(obj_id)
         if model:
             form = StudyForm()
             form.name.data = model.name
@@ -77,7 +93,7 @@ class _UpdateView(MethodView):
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
     def post(self, obj_id):
-        model = self.get_study_program(obj_id)
+        model = get_study_program(obj_id)
         if model:
             form = StudyForm(True, model.name)
             if form.validate_on_submit():
@@ -86,10 +102,6 @@ class _UpdateView(MethodView):
                 return create_response(STAT_SUCCESS, html_list=render_html_data_list())
             return create_response(STAT_INVALID, html_form=self.render_form(form, obj_id=obj_id))
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
-
-    @staticmethod
-    def get_study_program(obj_id):
-        return db_session.query(Study).filter(Study.id == obj_id).first()
 
     @staticmethod
     def render_form(form, obj_id):
@@ -106,26 +118,22 @@ class _DeleteView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self, obj_id):
-        model = self.get_study_program(obj_id)
+        model = get_study_program(obj_id)
         if model:
             return create_response(STAT_SUCCESS,
                                    html_form=render_template('admin/partials/sp/studyprogram_delete.html', obj=model))
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
     def post(self, obj_id):
-        model = self.get_study_program(obj_id)
+        model = get_study_program(obj_id)
         if model:
             db_session.delete(model)
             db_session.commit()
             return create_response(STAT_SUCCESS, html_list=render_html_data_list())
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 
-    @staticmethod
-    def get_study_program(obj_id):
-        return db_session.query(Study).filter(Study.id == obj_id).first()
 
-
-CrudStudy = Crud(
+CrudStudy = CrudRouter(
     'study', 'studies',
     _CreateView,
     _ReadView,
