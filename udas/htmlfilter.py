@@ -163,6 +163,8 @@ def resize_image(image, scale_down_perc, quality):
 
 
 def resize_image_in_img_tag(img_tag):
+    """Resize image yang ada pada tag img agar tidak melebihi MAX_IMAGE_WIDTH
+        dan turunkan kualitas image agar ukuran file lebih kecil"""
     src = img_tag.get('src')
     if src:
         base64_img = src.split(',', 1)[1]

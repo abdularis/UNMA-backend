@@ -8,8 +8,9 @@ from flask.views import MethodView
 
 from udas.api.authutil import token_required
 from udas.api.response import create_response
-from udas.common import get_uploaded_file_folder, get_uploaded_file_properties
 from udas.database import db_session
+from udas.media import get_media_folder, get_thumbnail_file_path, DEFAULT_THUMBNAIL_FILENAME, \
+    get_uploaded_file_properties, get_upload_folder
 from udas.models import StudentAnnouncementAssoc, Announcement
 
 
@@ -25,11 +26,21 @@ class AnnouncementDescription(MethodView):
         return make_response('Description not found!', 404)
 
 
+class AnnouncementThumbnail(MethodView):
+    decorators = [token_required]
+
+    def get(self, obj_id):
+        file_path = get_thumbnail_file_path(str(obj_id))
+        if os.path.exists(file_path):
+            return send_from_directory(get_media_folder(str(obj_id)), DEFAULT_THUMBNAIL_FILENAME)
+        return abort(404)
+
+
 class AttachmentDownload(MethodView):
     decorators = [token_required]
 
     def get(self, pub_id, filename):
-        folder_path = get_uploaded_file_folder(str(pub_id))
+        folder_path = get_upload_folder(str(pub_id))
         if os.path.exists(folder_path):
             return send_from_directory(folder_path, filename)
         return abort(404)
@@ -56,7 +67,17 @@ class AnnouncementRead(MethodView):
 class AnnouncementList(MethodView):
     decorators = [token_required]
 
-    def get(self):
+    def get(self, obj_id=None):
+        if obj_id:
+            result = db_session.query(StudentAnnouncementAssoc.read, Announcement)\
+                .filter(StudentAnnouncementAssoc.student_id == g.user_id,
+                    Announcement.id == StudentAnnouncementAssoc.announce_id, Announcement.public_id == str(obj_id))\
+                .first()
+            if result and len(result) >= 2:
+                return create_response(True, data=self.build_announcement_json_object(result[0], result[1]))
+            else:
+                return create_response(False, message="Data not found!")
+
         filters = [StudentAnnouncementAssoc.student_id == g.user_id,
                    Announcement.id == StudentAnnouncementAssoc.announce_id]
         if 'since' in request.args:
@@ -95,6 +116,7 @@ class AnnouncementList(MethodView):
         obj = {
             'id': announcement.public_id,
             'title': announcement.title,
+            'thumbnail': None,
             'description': None,
             'publisher': announcement.publisher.name,
             'last_updated': announcement.last_updated,
@@ -104,6 +126,7 @@ class AnnouncementList(MethodView):
 
         if announcement.description:
             size = len(announcement.description)
+            obj['thumbnail'] = url_for('api.announcement_thumbnail', obj_id=announcement.public_id, _external=True)
             obj['description'] = {
                 'url': url_for('api.announcement_description',
                                pub_id=announcement.public_id,

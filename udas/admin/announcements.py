@@ -17,8 +17,10 @@ from wtforms.validators import InputRequired
 
 import udas.fcm as fcm
 from udas.ajaxutil import create_response, STAT_SUCCESS, STAT_INVALID, STAT_ERROR
-from udas.common import get_uploaded_file_folder, save_uploaded_file, decorate_function, CrudRouter
+from udas.common import decorate_function, CrudRouter
 from udas.database import db_session
+from udas.media import save_uploaded_file, get_upload_folder, get_media_folder, get_thumbnail_file_path
+from udas.htmlthumbnailler import create_thumbnail_from_html
 from udas.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Study, Class
 from udas.session import LoginRequired
 from udas.htmlfilter import filter_html
@@ -171,6 +173,11 @@ class _CreateView(MethodView):
                 anc.attachment = attachment_filename
             db_session.add(anc)
             db_session.commit()
+
+            # create thumbnail for description
+            if anc.description:
+                create_thumbnail_from_html(anc.description, get_thumbnail_file_path(anc.public_id))
+
             flash('Pengumuman berhasil di publish!', category='succ')
 
             self.send_notification(anc, students)
@@ -197,7 +204,11 @@ class _CreateView(MethodView):
         if reg_ids:
             f = fcm.FcmNotification(app.config['FCM_SERVER_KEY'])
             try:
-                responses = f.send([obj[0] for obj in reg_ids], data={'title': anc.title})
+                data = {
+                    'id': anc.public_id,
+                    'title': anc.title
+                }
+                responses = f.send([obj[0] for obj in reg_ids], data=data)
                 for status_code, resp_msg in responses:
                     if status_code == 200 and len(resp_msg.results) > 0:
                         error = resp_msg.results[0][1].get('error')
@@ -219,9 +230,9 @@ class _ReadView(MethodView):
             return create_response(STAT_SUCCESS, html_list=render_html_list_data())
         elif obj_id:
             if request.args.get('file'):
-                file_folder = get_uploaded_file_folder(str(obj_id))
+                file_folder = get_upload_folder(str(obj_id))
                 if os.path.exists(file_folder):
-                    return send_from_directory(file_folder, request.args['file'])
+                    return send_from_directory(file_folder, request.args['file'], as_attachment=True)
 
             res = db_session.query(Announcement).filter(Announcement.public_id == str(obj_id)).first()
             if res:
