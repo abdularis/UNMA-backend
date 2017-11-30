@@ -1,1 +1,1 @@
-web: gunicorn udas/__init__.py
+web: gunicorn udas:app
