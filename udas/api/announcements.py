@@ -9,8 +9,7 @@ from flask.views import MethodView
 from udas.api.authutil import token_required
 from udas.api.response import create_response
 from udas.database import db_session
-from udas.media import get_media_folder, get_thumbnail_file_path, DEFAULT_THUMBNAIL_FILENAME, \
-    get_uploaded_file_properties, get_upload_folder
+from udas.media import get_uploaded_file_properties, get_upload_folder
 from udas.models import StudentAnnouncementAssoc, Announcement
 
 
@@ -24,16 +23,6 @@ class AnnouncementDescription(MethodView):
         if result:
             return result[0]
         return make_response('Description not found!', 404)
-
-
-class AnnouncementThumbnail(MethodView):
-    decorators = [token_required]
-
-    def get(self, obj_id):
-        file_path = get_thumbnail_file_path(str(obj_id))
-        if os.path.exists(file_path):
-            return send_from_directory(get_media_folder(str(obj_id)), DEFAULT_THUMBNAIL_FILENAME)
-        return abort(404)
 
 
 class AttachmentDownload(MethodView):
@@ -116,7 +105,6 @@ class AnnouncementList(MethodView):
         obj = {
             'id': announcement.public_id,
             'title': announcement.title,
-            'thumbnail': None,
             'description': None,
             'publisher': announcement.publisher.name,
             'last_updated': announcement.last_updated,
@@ -126,7 +114,6 @@ class AnnouncementList(MethodView):
 
         if announcement.description:
             size = len(announcement.description)
-            obj['thumbnail'] = url_for('api.announcement_thumbnail', obj_id=announcement.public_id, _external=True)
             obj['description'] = {
                 'url': url_for('api.announcement_description',
                                pub_id=announcement.public_id,

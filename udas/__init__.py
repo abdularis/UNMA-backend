@@ -21,9 +21,7 @@ import udas.admin
 app.register_blueprint(udas.api.api)
 app.register_blueprint(udas.admin.admin)
 
+
 @app.route('/')
 def index():
     return redirect(url_for('admin.login'))
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')

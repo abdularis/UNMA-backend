@@ -7,8 +7,6 @@ import mimetypes
 from werkzeug.utils import secure_filename
 from udas import app
 
-DEFAULT_THUMBNAIL_FILENAME = 'thumb.jpg'
-
 
 def get_media_folder(announcement_id):
     media_folder = os.path.join(app.config.get('UPLOAD_FOLDER'), announcement_id)
@@ -22,10 +20,6 @@ def get_upload_folder(announcement_id):
     if not os.path.exists(upload_folder):
         os.mkdir(upload_folder)
     return upload_folder
-
-
-def get_thumbnail_file_path(announcement_id):
-    return os.path.join(get_media_folder(announcement_id), DEFAULT_THUMBNAIL_FILENAME)
 
 
 def save_uploaded_file(announcement_id, file):

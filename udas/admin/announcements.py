@@ -19,8 +19,7 @@ import udas.fcm as fcm
 from udas.ajaxutil import create_response, STAT_SUCCESS, STAT_INVALID, STAT_ERROR
 from udas.common import decorate_function, CrudRouter
 from udas.database import db_session
-from udas.media import save_uploaded_file, get_upload_folder, get_media_folder, get_thumbnail_file_path
-from udas.htmlthumbnailler import create_thumbnail_from_html
+from udas.media import save_uploaded_file, get_upload_folder
 from udas.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Study, Class
 from udas.session import LoginRequired
 from udas.htmlfilter import filter_html
@@ -173,10 +172,6 @@ class _CreateView(MethodView):
                 anc.attachment = attachment_filename
             db_session.add(anc)
             db_session.commit()
-
-            # create thumbnail for description
-            if anc.description:
-                create_thumbnail_from_html(anc.description, get_thumbnail_file_path(anc.public_id))
 
             flash('Pengumuman berhasil di publish!', category='succ')
 
