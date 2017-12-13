@@ -24,6 +24,36 @@ class LoginForm(FlaskForm):
         super().__init__(csrf_enabled=False)
 
 
+class UpdatePasswordForm(FlaskForm):
+    old_password = PasswordField(validators=[InputRequired()])
+    new_password = PasswordField(validators=[InputRequired()])
+    fcm_token = StringField()
+
+    def __init__(self):
+        super().__init__(csrf_enabled=False)
+
+
+def authorize_user(student, fcm_token):
+    token, payload = create_access_token(student.id, student.username)
+    student.last_login = datetime.datetime.utcnow()
+
+    stud_token = StudentToken()
+    stud_token.student_id = student.id
+    stud_token.acc_token = token
+    stud_token.fcm_token = fcm_token
+    db_session.query(StudentToken).filter(StudentToken.student_id == student.id).delete()
+    db_session.add(stud_token)
+    db_session.commit()
+
+    data = {
+        'name': student.name,
+        'username': student.username,
+        'token': token,
+        'exp': payload['exp']
+    }
+    return data
+
+
 class ClientAuthentication(MethodView):
 
     def post(self):
@@ -34,23 +64,24 @@ class ClientAuthentication(MethodView):
                 .first()
 
             if student and student.verify_password(form.password.data):
-                token, payload = create_access_token(student.id, student.username)
-                student.last_login = datetime.datetime.utcnow()
+                # token, payload = create_access_token(student.id, student.username)
+                # student.last_login = datetime.datetime.utcnow()
 
-                stud_token = StudentToken()
-                stud_token.student_id = student.id
-                stud_token.acc_token = token
-                stud_token.fcm_token = form.fcm_token.data
-                db_session.query(StudentToken).filter(StudentToken.student_id == student.id).delete()
-                db_session.add(stud_token)
-                db_session.commit()
+                # stud_token = StudentToken()
+                # stud_token.student_id = student.id
+                # stud_token.acc_token = token
+                # stud_token.fcm_token = form.fcm_token.data
+                # db_session.query(StudentToken).filter(StudentToken.student_id == student.id).delete()
+                # db_session.add(stud_token)
+                # db_session.commit()
 
-                data = {
-                    'name': student.name,
-                    'username': student.username,
-                    'token': token,
-                    'exp': payload['exp']
-                }
+                # data = {
+                #     'name': student.name,
+                #     'username': student.username,
+                #     'token': token,
+                #     'exp': payload['exp']
+                # }
+                data = authorize_user(student, form.fcm_token.data)
 
                 return create_response(True,
                                        message='Successfully logged in!',
@@ -78,7 +109,6 @@ class ClientProfile(MethodView):
                 'name': stud.name,
                 'username': stud.username,
                 'fcm_token': stud_token.fcm_token,
-                'recv_announce': len(stud.announcements),
                 'class': {
                     'prog': stud.my_class.study.name,
                     'name': stud.my_class.name,
@@ -90,13 +120,16 @@ class ClientProfile(MethodView):
         return create_response(False, s_code=404)
 
     def post(self):
-        stud = db_session.query(Student).filter(Student.id == g.user_id).first()
-        if stud and request.form.get('new_password') and request.form.get('old_password'):
-            if stud.verify_password(request.form.get('old_password')):
-                stud.password = request.form.get('new_password')
-                db_session.commit()
-                return create_response(True, message='Password updated', s_code=201)
-            return unauth_response(message='Old password is wrong')
+        form = UpdatePasswordForm()
+        if form.validate_on_submit():
+            student = db_session.query(Student).filter(Student.id == g.user_id).first()
+            if student:
+                if student.verify_password(form.old_password.data):
+                    student.password = form.new_password.data
+                    db_session.commit()
+                    data = authorize_user(student, form.fcm_token.data)
+                    return create_response(True, message='Password updated', data=data, s_code=201)
+                return create_response(False, message='Old password is wrong')
         return create_response(False, s_code=400)
 
 

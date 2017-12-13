@@ -1,3 +1,4 @@
+*.pyc
 instance/*
 .idea/*
 __pycache__/*

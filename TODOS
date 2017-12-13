@@ -3,3 +3,6 @@ Separate somthing that can be separated
 
 Implement searching, pagination, filter on every data tables
 Resend the announcement notification
+
+*
+Delete doesn't work when we reload the list data from server
