@@ -36,8 +36,7 @@ RECEIVER_TYPE_STUDENTS = (3, 'Mahasiswa')
 class AnnounceForm(FlaskForm):
     title = StringField('Judul',
                         validators=[InputRequired()])
-    description = TextAreaField('Deskripsi/Isi',
-                                default='Hello')
+    description = TextAreaField('Deskripsi/Isi')
     receiver_type = RadioField('Tipe Penerima',
                                validators=[InputRequired()],
                                coerce=int,
