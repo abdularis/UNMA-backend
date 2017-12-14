@@ -1,0 +1,44 @@
+{% for obj in objs %}
+<div class="card mb-3">
+
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="card-title h3">
+                <a href="{{url_for('admin.announcement_read', obj_id=obj.public_id)}}" class="text-dark">
+                    {{ obj.title }}
+                </a>
+                <hr>
+            </div>
+            <div>
+                <span class="small text-muted"><span class="icon-calendar-empty"></span> {{ obj.date_created }}</span>
+                <span class="badge badge-secondary ml-2"><span class="icon-user"></span> {{ obj.publisher }}</span>
+            </div>
+        </div>
+
+        {% if obj.attachment %}
+            <div>
+                <span>Attachment:</span>
+                <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, file=obj.attachment) }}">
+                    {{obj.attachment}}
+                    <span class="icon-download" aria-hidded="true"></span>
+                </a>
+            </div>
+        {% endif %} 
+
+        <div class="mt-3">
+            <div class="float-right">
+                <button type="button" class="btn btn-sm btn-link js-btn-update" data-href="{{url_for('admin.announcement_update', obj_id=obj.public_id)}}">
+                    <span class="icon-pencil"></span>
+                    Edit
+                </button>
+                <button type="button" class="btn btn-sm btn-link text-danger js-btn-delete" data-href="{{url_for('admin.announcement_delete', obj_id=obj.public_id)}}">
+                    <span class="icon-trash-empty"></span>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    
+</div>
+{% endfor %}

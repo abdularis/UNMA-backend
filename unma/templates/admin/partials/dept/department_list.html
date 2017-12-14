@@ -1,0 +1,31 @@
+<thead class="thead-default">
+    <tr>
+        <th># ({{objs|length}})</th>
+        <th>Nama</th>
+        <th>Jumlah Kelas</th>
+        <th>Operasi</th>
+    </tr>
+</thead>
+<tbody>
+{% for obj in objs %}
+    <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>
+            {{ obj.name }}
+        </td>
+        <td>{{ obj.classes_count }} kelas</td>
+        <td>
+            <button type="button" class="btn btn-sm btn-warning js-btn-update" data-href="{{url_for('admin.department_update', obj_id=obj.id)}}">
+                Edit
+            </button>
+            <button type="button" class="btn btn-sm btn-danger js-btn-delete" data-href="{{url_for('admin.department_delete', obj_id=obj.id)}}">
+                Hapus
+            </button>
+        </td>
+    </tr>
+{% else %}
+    <tr>
+        <td colspan="4" class="bg-info text-center">No data.</td>
+    </tr>
+</tbody>
+{% endfor %}

@@ -1,0 +1,26 @@
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+    <a href="{{ url_for('admin.index') }}" class="navbar-brand">
+        <span class="icon-megaphone"></span>
+        UNMA
+    </a>
+    <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarContent">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarContent">
+        <div class="navbar-nav mr-auto">
+            <a class="nav-item nav-link {{ 'active' if page == 'publish' }}" href="{{ url_for('admin.announcement_read') }}">Publish</a>
+            {% if g.is_admin %}
+            <a class="nav-item nav-link {{ 'active' if page == 'department' }}" href="{{ url_for('admin.department_read') }}">Prodi</a>
+            <a class="nav-item nav-link {{ 'active' if page == 'class' }}" href="{{ url_for('admin.class_read') }}">Kelas</a>
+            <a class="nav-item nav-link {{ 'active' if page == 'student' }}" href="{{ url_for('admin.student_read') }}">Mahasiswa</a>
+            <a class="nav-item nav-link {{ 'active' if page == 'publisher' }}" href="{{ url_for('admin.publisher_read') }}">Publisher</a>
+            {% endif %}
+        </div>
+
+        <div class="navbar-nav">
+            <span class="navbar-text">({{ g.curr_user }}) </span>
+            <a class="nav-item nav-link" href="{{ url_for('admin.logout') }}">Logout</a>
+        </div>
+    </div>
+</nav>

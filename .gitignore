@@ -2,6 +2,6 @@
 instance/*
 .idea/*
 __pycache__/*
-udas/__pycache__/*
-udas/admin/__pycache__/*
-udas/api/__pycache__/*
+unma/__pycache__/*
+unma/admin/__pycache__/*
+unma/api/__pycache__/*
