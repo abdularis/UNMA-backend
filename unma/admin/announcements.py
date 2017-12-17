@@ -54,6 +54,9 @@ class AnnounceForm(FlaskForm):
         super().__init__(csrf_enabled=False)
         self.receiver.choices = []
 
+    def validate_on_submit_update(self):
+        return self.is_submitted() and self.title.data and self.description.data
+
 
 class AnnouncementModelView:
     def __init__(self, announcement):
@@ -159,30 +162,9 @@ class _CreateView(MethodView):
             anc.title = form.title.data
             anc.description = filter_html(form.description.data)
 
-            students = []
-            if form.receiver_type.data == RECEIVER_TYPE_DEPARTMENT[0]:
-                # Prodi
-                students = db_session.query(Student) \
-                    .filter(Department.id.in_(form.receiver.data),
-                            Class.department_id == Department.id,
-                            Student.class_id == Class.id) \
-                    .all()
-            elif form.receiver_type.data == RECEIVER_TYPE_CLASSES[0]:
-                # Kelas
-                students = db_session.query(Student) \
-                    .filter(Student.class_id.in_(form.receiver.data)) \
-                    .all()
-            elif form.receiver_type.data == RECEIVER_TYPE_STUDENTS[0]:
-                # Mhs
-                students = db_session.query(Student) \
-                    .filter(Student.id.in_(form.receiver.data)) \
-                    .all()
+            students = self.get_students_from_receiver_type(form)
+            self.associate_announcement_with_students(anc, students)
 
-            for student in students:
-                assoc = StudentAnnouncementAssoc()
-                assoc.student = student
-                assoc.announcement = anc
-                anc.students.append(assoc)
             attachment_filename = save_uploaded_file(anc.public_id, form.attachment.data)
             if attachment_filename:
                 anc.attachment = attachment_filename
@@ -209,6 +191,36 @@ class _CreateView(MethodView):
             btn_primary='Publish')
 
     @staticmethod
+    def associate_announcement_with_students(anc, students):
+        for student in students:
+            assoc = StudentAnnouncementAssoc()
+            assoc.student = student
+            assoc.announcement = anc
+            anc.students.append(assoc)
+
+    @staticmethod
+    def get_students_from_receiver_type(form):
+        students = []
+        if form.receiver_type.data == RECEIVER_TYPE_DEPARTMENT[0]:
+            # Prodi
+            students = db_session.query(Student) \
+                .filter(Department.id.in_(form.receiver.data),
+                        Class.department_id == Department.id,
+                        Student.class_id == Class.id) \
+                .all()
+        elif form.receiver_type.data == RECEIVER_TYPE_CLASSES[0]:
+            # Kelas
+            students = db_session.query(Student) \
+                .filter(Student.class_id.in_(form.receiver.data)) \
+                .all()
+        elif form.receiver_type.data == RECEIVER_TYPE_STUDENTS[0]:
+            # Mhs
+            students = db_session.query(Student) \
+                .filter(Student.id.in_(form.receiver.data)) \
+                .all()
+        return students
+
+    @staticmethod
     def send_notification(anc, students):
         reg_ids = db_session.query(StudentToken.fcm_token) \
             .filter(StudentToken.student_id.in_([std.id for std in students])).all()
@@ -228,9 +240,13 @@ class _CreateView(MethodView):
                             db_session.query(StudentToken).filter(StudentToken.fcm_token == fcm_token).delete()
                             logging.info('Account tokens deleted cause %s is %s' % (fcm_token, error))
                 db_session.commit()
+                return True
             except requests.exceptions.ConnectionError as msg:
-                logging.info("Can't send notification - %s" % str(msg))
+                logging.info("Connection error can't send notification - %s" % str(msg))
                 flash('Error koneksi ke firebase: gagal mengirim notifikasi ke pengguna!', category='warn')
+                return False
+        flash('Tidak ada penerima yang login untuk dikirim notifikasi!', category='warn')
+        return False
 
 
 class _ReadView(MethodView):
@@ -247,6 +263,13 @@ class _ReadView(MethodView):
 
             res = db_session.query(Announcement).filter(Announcement.public_id == str(obj_id)).first()
             if res:
+                if request.args.get('act') == 'resend_notification':
+                    students = db_session.query(Student).filter(StudentAnnouncementAssoc.announce_id == res.id, Student.id == StudentAnnouncementAssoc.student_id).all()
+                    print("Students: %d" % len(students))
+                    if _CreateView.send_notification(res, students):
+                        flash('Notifikasi berhasil dikirim!', category='succ')
+                    html_extra = render_template('admin/partials/anc/announce_save_notif.html')
+                    return create_response(STAT_SUCCESS, html_extra=html_extra)
                 return render_template('admin/announcement_detail.html', obj=AnnouncementModelView(res))
             return abort(404)
         return render_template('admin/announcements.html')
@@ -256,8 +279,67 @@ class _UpdateView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
     def get(self, obj_id):
-        # ToDo Implement update on announcement
-        return create_response(STAT_ERROR, html_error='<div class="modal-body">Not implemented yet</div>')
+        model = get_announcement(obj_id)
+        if model:
+            form = AnnounceForm()
+            form.title.data = model.title
+            form.description.data = model.description
+            form.attachment.data = "Hello world"
+            form.receiver.choices = get_receiver_by_departments()
+
+            html_form = self.render_form(form, model)
+            return create_response(STAT_SUCCESS, html_form=html_form)
+        return create_response(STAT_ERROR, html_error='Object not found!')
+
+    def post(self, obj_id):
+        model = get_announcement(obj_id)
+        if model:
+            form = AnnounceForm()
+            form.receiver.choices = get_receiver_list(form.receiver_type.data)
+
+            if form.validate_on_submit_update():
+                model.title = form.title.data
+                model.description = filter_html(form.description.data)
+                model.last_updated = time.time()
+
+                students = []
+                if form.receiver.data:
+                    db_session.query(StudentAnnouncementAssoc)\
+                        .filter(StudentAnnouncementAssoc.announce_id == model.id).delete()
+                    students = _CreateView.get_students_from_receiver_type(form)
+                    _CreateView.associate_announcement_with_students(model, students)
+
+                if form.attachment.data:
+                    attachment_filename = save_uploaded_file(model.public_id, form.attachment.data)
+                    if attachment_filename:
+                        model.attachment = attachment_filename
+
+                db_session.commit()
+
+                if len(students) > 0:
+                    _CreateView.send_notification(model, students)
+
+                flash('Pengumuman berhasil di Update!', category='succ')
+
+                html_extra = url_for('admin.announcement_read', obj_id=model.public_id)
+                return create_response(STAT_SUCCESS, html_extra=html_extra)
+            return create_response(STAT_INVALID, html_form=self.render_form(form, model))
+        return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
+
+    @staticmethod
+    def render_form(form, model):
+        attach_file_name = model.attachment if model.attachment else 'Tidak ada attachment'
+        receiver_summary = str(len(model.students)) + " Mahasiswa menerima pesan ini"
+
+        return render_template(
+            'admin/partials/anc/announce_form_update.html',
+            form=form,
+            form_title='Update pengumuman',
+            form_action=url_for('admin.announcement_update', obj_id=model.public_id),
+            form_id='updateForm',
+            btn_primary='Republish',
+            receiver_summary=receiver_summary,
+            attach_file_name=attach_file_name)
 
 
 class _DeleteView(MethodView):
@@ -275,6 +357,8 @@ class _DeleteView(MethodView):
         if model:
             db_session.delete(model)
             db_session.commit()
+            if request.args.get('return') == 'redirect':
+                return create_response(STAT_SUCCESS, html_extra=url_for('admin.announcement_read'))
             return create_response(STAT_SUCCESS, html_list=render_html_list_data())
         return create_response(STAT_ERROR, html_error=render_template('admin/partials/error/ajax_404.html'))
 

@@ -4,44 +4,73 @@
 
 <div class="container pt-4 pb-4">
     <div class="card card-body mb-3">
-        <div>
-            <span>Judul:</span>
-            {{ obj.title }}
-            <span class="text-muted">({{ obj.public_id }})</span>
+        <div class="row mt-1 mb-1">
+            <span class="col-4">Judul:</span>
+            <span class="col-8"><b>{{ obj.title }}</b> <span class="text-muted">({{ obj.public_id }})</span></span>
         </div>
-        <div>
-            <span>Publisher:</span>
-            {{ obj.publisher }}
+        <div class="row mt-1 mb-1">
+            <span class="col-4">Publisher:</span>
+            <span class="col-8">
+                <span class="icon-user">
+                {{ obj.publisher }}
+            </span>
         </div>
-        <div>
-            <span>Attachment:</span>
-            {% if obj.attachment %}
-            <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, file=obj.attachment) }}">{{obj.attachment}}</a>
-            {% else %}
-            No
-            {% endif %} 
+        <div class="row mt-1 mb-1">
+            <span class="col-4">Attachment:</span>
+            <span class="col-8">
+                {% if obj.attachment %}
+                    <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, file=obj.attachment) }}">{{obj.attachment}} <span class="icon-download" aria-hidded="true"></span></a>
+                {% else %}
+                    No
+                {% endif %}
+            </span>
         </div>
-        <div>
-            <span>Tgl. Publish:</span>
-            {{ obj.date_created }}
+        <div class="row mt-1 mb-1">
+            <span class="col-4">Tgl. Publish:</span>
+            <span class="col-8">
+                <span class="icon-calendar-empty">
+                {{ obj.date_created }}
+            </span>
         </div>
-        <div>
-            <span>Tgl. Diperbarui:</span>
-            {{ obj.last_updated }}
+        <div class="row mt-1 mb-1">
+            <span class="col-4">Tgl. Diperbarui:</span>
+            <span class="col-8">
+                <span class="icon-calendar-empty">
+                {{ obj.last_updated }}
+            </span>
         </div>
-        <div>
-            <span>Jumlah Penerima:</span>
-            {{ obj.receivers }}
+        <div class="row mt-1 mb-1">
+            <span class="col-4">Penerima:</span>
+            <span class="col-8">{{ obj.receivers }} Mahasiswa - <a href="#">Lihat detail</a></span>
         </div>
 
         <div class="mt-3">
-            <button type="button" class="btn btn-sm btn-link js-btn-update" data-href="{{url_for('admin.announcement_update', obj_id=obj.public_id)}}">
+            <img class="img-progress" src="{{ url_for('static', filename='images/progress.gif') }}" width="42" height="42" style="display: none"></img>
+            <button type="button" class="btn btn-sm btn-primary js-btn-resend-notification">
+                <span class="icon-paper-plane"></span>
+                Kirim Kembali Notifikasi
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary ml-2" data-toggle="collapse" data-target="#formContainerUpdate">
+                <span class="icon-pencil"></span>
                 Edit
             </button>
-            <button type="button" class="btn btn-sm btn-link text-danger js-btn-delete" data-href="{{url_for('admin.announcement_delete', obj_id=obj.public_id)}}">
+            <button type="button" class="btn btn-sm btn-link text-danger ml-2 js-btn-delete">
+                <span class="icon-trash-empty"></span>
                 Hapus
             </button>
         </div>
+
+        <div class="mt-3 notification_container">
+            {% include 'admin/partials/anc/announce_save_notif.html' %}
+        </div>
+
+        <a name="formContainerUpdate"></a>
+        <div id="formContainerUpdate" class="collapse" data-href="{{url_for('admin.announcement_update', obj_id=obj.public_id)}}">
+            Crap
+        </div>
+
+        <div class="mt-1 alertContainer"></div>
+
     </div>
 
     <div class="card">
@@ -52,7 +81,145 @@
             {{ obj.description|safe }}
         </div>
     </div>
+
+    <div id="formModal" class="modal fade" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title text-danger">Apakah anda yakin ingin menghapus <b>"{{obj.title}}"</b>?</h3>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-footer">
+                    <img class="img-progress" src="{{ url_for('static', filename='images/progress.gif') }}" width="42" height="42" style="display: none"></img>
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-sm btn-danger btn-ok js-btn-delete-confirm">Hapus</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% include 'includes/_js_dep.html' %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/summernote.css') }}">
+<script type="text/javascript" src="{{ url_for('static', filename='js/summernote.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/lang/summernote-id-ID.min.js') }}"></script>
+<script type="text/javascript">
+
+function scrollToForm() {
+    var tag = $('a[name=formContainerUpdate]')
+    $('html,body').animate({scrollTop: tag.offset().top}, 800)
+}
+
+$(function() {
+    $('.js-btn-delete').click(function(event) {
+        $('#formModal').modal('show')
+    });
+
+    $('.js-btn-delete-confirm').click(function(event) {
+        $.ajax({
+            url: "{{ url_for('admin.announcement_delete', obj_id=obj.public_id, return='redirect') }}",
+            type: 'post',
+            cache: true,
+            dataType: 'json',
+            beforeSend: function() {
+                $('#formModal .img-progress').show(300)
+            },
+            success: function(data) {
+                if (data.status == 'success') {
+                    window.location.href = data.html_extra
+                } else {
+                    $('#formModal .modal-content').html(data.html_error)
+                }
+            },
+            error: function() {
+                $('#formModal .modal-content').html('<div class="modal-body text-danger">Telah terjadi kesalahan.</div>')
+            }
+        })
+    });
+
+    $('.js-btn-resend-notification').click(function(event) {
+        $.ajax({
+            url: "{{ url_for('admin.announcement_read', obj_id=obj.public_id, act='resend_notification') }}",
+            type: 'get',
+            cache: true,
+            dataType: 'json',
+            beforeSend: function() {
+                $('.img-progress').show(300)
+            },
+            success: function(data) {
+                $('.notification_container').html(data.html_extra)
+                $('.img-progress').hide(200)
+            },
+            error: function() {
+                $('#formModal .modal-content').html('<div class="modal-body text-danger">Telah terjadi kesalahan.</div>')
+                $('.img-progress').hide(200)
+            }
+        })
+    });
+
+    $('#formContainerUpdate').on('show.bs.collapse', function(event) {
+        $.ajax({
+            url: $(this).attr('data-href'),
+            type: 'get',
+            dataType: 'json',
+            beforeSend: function() {
+                $('#formContainerUpdate').html('<div class="alert alert-info">Loading...</div>')
+            },
+            success: function(data) {
+                if (data.status != 'error') {
+                    $('#formContainerUpdate').html(data.html_form)
+                    scrollToForm()
+                    $('.js-btn-publish-cancel').click(function(event) {
+                        $('#formContainerUpdate.collapse').collapse('hide')
+                    });
+                } else {
+                    $('#formContainerUpdate').html(data.html_error)
+                }
+            },
+            error: function() {
+                $('#formContainerUpdate').html('<div class="text-danger">Telah terjadi kesalahan.</div>')
+            }
+        });
+    });
+});
+
+function registerAsyncFormSubmission(form_selector) {
+    $('#formContainerUpdate').on('submit', form_selector, function(event) {
+        event.preventDefault();
+        var form = $(this)
+        var formData = new FormData(this)
+        $.ajax({
+            url: form.attr('action'),
+            data: formData,
+            type: form.attr('method'),
+            cache: false,
+            contentType: false,
+            processData: false,
+            beforeSend: function() {
+                $('#formContainerUpdate input').prop('disabled', true)
+                $('#formContainerUpdate button').prop('disabled', true)
+                $('.img-progress').show(500)
+            },
+            success: function(data) {
+                if (data.status == 'success') {
+                    // $('#formContainerUpdate').collapse('hide')
+                    window.location.href = data.html_extra
+                } else if (data.status == 'invalid') {
+                    $('#formContainerUpdate').html(data.html_form)
+                } else {
+                    $('#formContainerUpdate').html(data.html_error)
+                }
+
+                $('html,body').scrollTop(0)
+            },
+            error: function(data) {
+                $('#formContainerUpdate').html('<div class="text-danger">Telah terjadi kesalahan.</div>')        
+            }
+        });
+    });
+}
+
+registerAsyncFormSubmission('#updateForm')
+</script>
+
 {% endblock %}

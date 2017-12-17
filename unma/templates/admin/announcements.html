@@ -53,10 +53,12 @@
 <script type="text/javascript" src="{{ url_for('static', filename='js/me/listloader.js') }}"></script>
 
 <script type="text/javascript">
-$(listLoader("{{ url_for('admin.announcement_read', act='list') }}", ".js-dynamic-table", function(){
-    addCallbackToJsBtnUpdate();
-    addCallbackToJsBtnDelete();
-}));
+$(function() {
+    listLoader("{{ url_for('admin.announcement_read', act='list') }}", ".js-dynamic-table", function(){
+        addCallbackToJsBtnUpdate();
+        addCallbackToJsBtnDelete();
+    });
+});
 
 function scrollToForm() {
     var tag = $('a[name=formContainer]')
@@ -103,6 +105,8 @@ $(function() {
             }
         })
     });
+
+
 });
 
 function registerAsyncFormSubmission(form_selector) {

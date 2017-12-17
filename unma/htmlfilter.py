@@ -8,8 +8,8 @@ import io
 import base64
 from PIL import Image
 
-MAX_IMAGE_WIDTH = 1000
-DEFAULT_IMAGE_QUALITY = 55
+MAX_IMAGE_WIDTH = 900
+DEFAULT_IMAGE_QUALITY = 50
 
 ALLOWED_TAGS = [
     'blockquote',
@@ -171,7 +171,7 @@ def resize_image_in_img_tag(img_tag):
         bytes_img = base64.b64decode(base64_img)
 
         pil_image = Image.open(io.BytesIO(bytes_img))
-        perc_scale = 95
+        perc_scale = 100
         if pil_image.size[0] > MAX_IMAGE_WIDTH:
             perc_scale = MAX_IMAGE_WIDTH / pil_image.size[0] * 100
 
