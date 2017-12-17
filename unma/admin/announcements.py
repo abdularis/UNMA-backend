@@ -6,6 +6,7 @@ import time
 import datetime
 import logging
 import os
+import shutil
 import requests
 
 from flask import render_template, request, url_for, g, abort, send_from_directory, flash
@@ -19,7 +20,7 @@ import unma.fcm as fcm
 from unma.ajaxutil import create_response, STAT_SUCCESS, STAT_INVALID, STAT_ERROR
 from unma.common import decorate_function, CrudRouter
 from unma.database import db_session
-from unma.media import save_uploaded_file, get_upload_folder
+from unma.media import save_uploaded_file, get_upload_folder, get_media_folder
 from unma.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Department, Class
 from unma.session import LoginRequired
 from unma.htmlfilter import filter_html
@@ -358,6 +359,8 @@ class _DeleteView(MethodView):
     def post(self, obj_id):
         model = get_announcement(obj_id)
         if model:
+            if model.attachment:
+                shutil.rmtree(get_media_folder(model.public_id), ignore_errors=True)
             db_session.delete(model)
             db_session.commit()
             if request.args.get('return') == 'redirect':
