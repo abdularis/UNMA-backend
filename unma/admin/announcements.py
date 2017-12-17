@@ -308,16 +308,19 @@ class _UpdateView(MethodView):
                         .filter(StudentAnnouncementAssoc.announce_id == model.id).delete()
                     students = _CreateView.get_students_from_receiver_type(form)
                     _CreateView.associate_announcement_with_students(model, students)
+                else:
+                    for student_assoc in model.students:
+                        students.append(student_assoc.student)
+                        student_assoc.read = False
+                        print("read = False")
 
                 if form.attachment.data:
                     attachment_filename = save_uploaded_file(model.public_id, form.attachment.data)
                     if attachment_filename:
                         model.attachment = attachment_filename
-
                 db_session.commit()
 
-                if len(students) > 0:
-                    _CreateView.send_notification(model, students)
+                _CreateView.send_notification(model, students)
 
                 flash('Pengumuman berhasil di Update!', category='succ')
 
