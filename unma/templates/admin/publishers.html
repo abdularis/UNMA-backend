@@ -26,6 +26,9 @@
 </div>
 
 {% include 'includes/_js_dep.html' %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/datatables.min.css') }}">
+<script type="text/javascript" src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
+
 <script type="text/javascript" src="{{ url_for('static', filename='js/me/crud.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/me/listloader.js') }}"></script>
 <script type="text/javascript">
@@ -33,6 +36,8 @@ $(function() {
     listLoader("{{ url_for('admin.publisher_read', act='list') }}", ".js-dynamic-table", function(){
         addCallbackToJsBtnUpdate();
         addCallbackToJsBtnDelete();
+
+        $('.js-dynamic-table').DataTable();
     })
 })
 </script>

@@ -41,7 +41,7 @@
         </div>
         <div class="row mt-1 mb-1">
             <span class="col-4">Penerima:</span>
-            <span class="col-8">{{ obj.receivers }} Mahasiswa - <a href="#">Lihat detail</a></span>
+            <span class="col-8">{{ obj.receivers }} Mahasiswa - <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, act='receiver_detail') }}">Lihat detail</a></span>
         </div>
 
         <div class="mt-3">

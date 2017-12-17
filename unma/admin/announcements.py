@@ -250,6 +250,13 @@ class _CreateView(MethodView):
         return False
 
 
+class AnnouncementReceiverDetailViewModel:
+
+    def __init__(self, announcement):
+        self.announcement = AnnouncementModelView(announcement)
+        self.receivers = announcement.students
+
+
 class _ReadView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
@@ -262,16 +269,19 @@ class _ReadView(MethodView):
                 if os.path.exists(file_folder):
                     return send_from_directory(file_folder, request.args['file'], as_attachment=True)
 
-            res = db_session.query(Announcement).filter(Announcement.public_id == str(obj_id)).first()
-            if res:
-                if request.args.get('act') == 'resend_notification':
-                    students = db_session.query(Student).filter(StudentAnnouncementAssoc.announce_id == res.id, Student.id == StudentAnnouncementAssoc.student_id).all()
+            model = get_announcement(obj_id)
+            if model:
+                if request.args.get('act') == 'receiver_detail':
+                    receiver_detail = AnnouncementReceiverDetailViewModel(model)
+                    return render_template('admin/announcement_receiver_detail.html', obj=receiver_detail)
+                elif request.args.get('act') == 'resend_notification':
+                    students = db_session.query(Student).filter(StudentAnnouncementAssoc.announce_id == model.id, Student.id == StudentAnnouncementAssoc.student_id).all()
                     print("Students: %d" % len(students))
-                    if _CreateView.send_notification(res, students):
+                    if _CreateView.send_notification(model, students):
                         flash('Notifikasi berhasil dikirim!', category='succ')
                     html_extra = render_template('admin/partials/anc/announce_save_notif.html')
                     return create_response(STAT_SUCCESS, html_extra=html_extra)
-                return render_template('admin/announcement_detail.html', obj=AnnouncementModelView(res))
+                return render_template('admin/announcement_detail.html', obj=AnnouncementModelView(model))
             return abort(404)
         return render_template('admin/announcements.html')
 
