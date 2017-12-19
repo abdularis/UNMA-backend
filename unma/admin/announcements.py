@@ -231,8 +231,8 @@ class _CreateView(MethodView):
                 data = {
                     'id': anc.public_id,
                     'title': anc.title,
-                    'desc_size': len(anc.description),
-                    'attachment': str(anc.attachment)
+                    'desc_size': len(anc.description) if anc.description else None,
+                    'attachment': anc.attachment
                 }
                 responses = f.send([obj[0] for obj in reg_ids], data=data)
                 for status_code, resp_msg in responses:
