@@ -12,14 +12,6 @@
             {{ form.std_class.label(class="form-control-label") }}
             <div class="form-inline">
                 {{ form.std_class(class="custom-select") }}
-                
-                {% if form.std_class.errors %}
-                <div class="text-danger">
-                    {% for err in form.std_class.errors %}
-                    {{ err }}
-                    {% endfor %}
-                </div>
-                {% endif %}
 
                 <div class="input-group">
                     <span class="input-group-addon">
@@ -39,20 +31,35 @@
     </div>
 </form>
 <script type="text/javascript">
-var loadClasses = function() {
-    var sel = $('#department').val()
-    var url = "{{ url_for('admin.student_create') }}" + "?act=cls&sp=" + sel
+classes = [
+    {% for cls in classes %}
+    {
+        id: "{{ cls.id }}",
+        dept_id: "{{ cls.department_id }}",
+        string: "{{ cls }}"
+    }{{ "," if not loop.last }}
+    {% endfor %}
+];
 
-    $.ajax({
-        url: url,
-        type: 'get',
-        dataType: 'json',
-        success: function(data) {
-            $('#std_class').html(data.html_extra)
-        }
-    })
+function template(cls_obj) {
+    return `<option value="` + cls_obj.id + `">` + cls_obj.string + `</option>`;
 }
 
-$('#department').on('change', loadClasses);
+function bindClassesToHtml(department_filter) {
+    var html;
+    for (i = 0; i < classes.length; i++) {
+        cls = classes[i];
+        if (department_filter == 0 || department_filter == cls.dept_id)
+            html += template(cls);
+    }
+
+    $('#std_class').html(html);
+}
+
+bindClassesToHtml(0);
+$('#department').on('change', function() {
+    var selection = $('#department').val();
+    bindClassesToHtml(selection);
+});
 
 </script>

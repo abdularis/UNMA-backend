@@ -74,8 +74,6 @@ class _CreateView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self):
-        if request.args.get('act') == 'cls':
-            return self._get_classes_options(int(request.args.get('dept')))
         form = StudentForm()
         return create_response(STAT_SUCCESS, html_form=self.render_form(form))
 
@@ -93,24 +91,16 @@ class _CreateView(MethodView):
         return create_response(STAT_INVALID, html_form=self.render_form(form))
 
     @staticmethod
-    def _get_classes_options(department_id=None):
-        res = StudentForm.get_classes_option(department_id)
-        if res:
-            html_select_options = \
-                render_template('admin/partials/std/class_options.html', objs=res)
-            return create_response(STAT_SUCCESS,
-                                   html_extra=html_select_options)
-        return create_response(STAT_ERROR)
-
-    @staticmethod
     def render_form(form):
+        res = db_session.query(Class).order_by(Class.department_id.asc()).all()
         return render_template(
             'admin/partials/std/student_form.html',
             form=form,
             form_title='Tambah akun mahasiswa',
             form_action=url_for('admin.student_create'),
             form_id='newForm',
-            btn_primary='Tambah')
+            btn_primary='Tambah',
+            classes=res)
 
 
 class _ReadView(MethodView):
