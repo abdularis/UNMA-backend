@@ -44,7 +44,7 @@ class ProfileDetailView(MethodView):
     @staticmethod
     def render_template(form_update_password=None,
                         form_update_profile=None):
-        admin = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+        admin = db_session.query(Admin).filter(Admin.username == g.curr_user.username).first()
         if admin:
             if not form_update_password: form_update_password = UpdatePasswordForm()
             if not form_update_profile: form_update_profile = UpdateProfileInfoForm()
@@ -61,7 +61,7 @@ class UpdatePasswordView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
     def post(self):
-        admin = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+        admin = db_session.query(Admin).filter(Admin.username == g.curr_user.username).first()
         if admin:
             form = UpdatePasswordForm()
             if form.validate_on_submit() and admin.verify_password(form.old_password.data):
@@ -82,7 +82,7 @@ class UpdateProfileInfoView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
     def post(self):
-        admin = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+        admin = db_session.query(Admin).filter(Admin.username == g.curr_user.username).first()
         if admin:
             form = UpdateProfileInfoForm()
             if form.validate_on_submit() and admin.verify_password(form.password.data):

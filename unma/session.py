@@ -8,12 +8,23 @@ from flask import session, redirect, url_for, g
 _sv_is_login = 'is_user_login'
 _sv_is_admin = 'is_admin'
 _sv_user_id = 'user_id'
+_sv_user_name = 'user_name'
+
+
+class UserSession:
+    is_login = False
+    is_admin = False
+    username = None
+    name = None
 
 
 def _populates_global_var():
-    g.is_login = bool(session.get(_sv_is_login))
-    g.is_admin = bool(session.get(_sv_is_admin))
-    g.curr_user = session.get(_sv_user_id)
+    user = UserSession()
+    user.is_login = bool(session.get(_sv_is_login))
+    user.is_admin = bool(session.get(_sv_is_admin))
+    user.username = session.get(_sv_user_id)
+    user.name = session.get(_sv_user_name)
+    g.curr_user = user
 
 
 class ParamDecorator:
@@ -88,6 +99,7 @@ class SessionManager:
         session[_sv_is_login] = True
         session[_sv_is_admin] = bool(admin.role == 'ADM')
         session[_sv_user_id] = admin.username
+        session[_sv_user_name] = admin.name
         _populates_global_var()
 
     @staticmethod
@@ -97,5 +109,6 @@ class SessionManager:
         session.pop(_sv_is_login, None)
         session.pop(_sv_is_admin, None)
         session.pop(_sv_user_id, None)
+        session.pop(_sv_user_name, None)
         _populates_global_var()
         return True

@@ -75,10 +75,10 @@ class AnnouncementModelView:
 
 
 def render_html_list_data():
-    if g.is_admin:
+    if g.curr_user.is_admin:
         results = db_session.query(Announcement).order_by(Announcement.id.desc()).all()
     else:
-        publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+        publisher = db_session.query(Admin).filter(Admin.username == g.curr_user.username).first()
         results = db_session.query(Announcement) \
             .filter(Announcement.publisher == publisher) \
             .order_by(Announcement.id.desc()) \
@@ -92,20 +92,20 @@ def get_announcement(anc_public_id):
 
 
 def get_receiver_by_departments():
-    if g.is_admin:
+    if g.curr_user.is_admin:
         return [(obj.id, obj.name) for obj in db_session.query(Department).all()]
     else:
-        publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+        publisher = db_session.query(Admin).filter(Admin.username == g.curr_user.username).first()
         return [(obj.id, obj.name) for obj in publisher.departments]
 
 
 def get_receiver_by_classes():
-    if g.is_admin:
+    if g.curr_user.is_admin:
         return [(obj.id, str(obj))
                 for obj in
                 db_session.query(Class).order_by(Class.year.asc(), Class.department_id.asc()).all()]
     else:
-        pub = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+        pub = db_session.query(Admin).filter(Admin.username == g.curr_user.username).first()
         choices = []
         for department in pub.departments:
             [choices.append((obj.id, str(obj))) for obj in department.classes]
@@ -113,12 +113,12 @@ def get_receiver_by_classes():
 
 
 def get_receiver_by_students():
-    if g.is_admin:
+    if g.curr_user.is_admin:
         return [(obj.id, '%s - %s' % (obj.username, obj.name))
                 for obj in
                 db_session.query(Student).all()]
     else:
-        pub = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+        pub = db_session.query(Admin).filter(Admin.username == g.curr_user.username).first()
         choices = []
         for department in pub.departments:
             for cls in department.classes:
@@ -159,7 +159,7 @@ class CreateView(MethodView):
             anc.public_id = str(uuid.uuid4())
             anc.date_created = time.time()
             anc.last_updated = anc.date_created
-            anc.publisher = db_session.query(Admin).filter(Admin.username == g.curr_user).first()
+            anc.publisher = db_session.query(Admin).filter(Admin.username == g.curr_user.username).first()
             anc.title = form.title.data
             anc.description = filter_html(form.description.data)
 

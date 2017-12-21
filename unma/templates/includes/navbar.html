@@ -15,7 +15,7 @@
     <div class="collapse navbar-collapse" id="navbarContent">
         <div class="navbar-nav mr-auto">
             <a class="nav-item nav-link ml-3 {{ 'active' if page == 'publish' }}" href="{{ url_for('admin.announcement_read') }}">Publish</a>
-            {% if g.is_admin %}
+            {% if g.curr_user.is_admin %}
             <a class="nav-item nav-link ml-3 {{ 'active' if page == 'department' }}" href="{{ url_for('admin.department_read') }}">Prodi</a>
             <a class="nav-item nav-link ml-3 {{ 'active' if page == 'class' }}" href="{{ url_for('admin.class_read') }}">Kelas</a>
             <a class="nav-item nav-link ml-3 {{ 'active' if page == 'student' }}" href="{{ url_for('admin.student_read') }}">Mahasiswa</a>
@@ -24,7 +24,7 @@
         </div>
 
         <div class="navbar-nav">
-            <a href="{{ url_for('admin.profile_detail') }}" class="nav-item nav-link ml-3"><span class="icon-user"> ({{ g.curr_user }}) </a>
+            <a href="{{ url_for('admin.profile_detail') }}" class="nav-item nav-link ml-3"><span class="icon-user"> ({{ g.curr_user.name }}) </a>
             <a class="nav-item nav-link ml-3" href="{{ url_for('admin.logout') }}">Logout</a>
         </div>
     </div>
