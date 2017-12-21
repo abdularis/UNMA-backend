@@ -15,7 +15,7 @@ from unma.models import Department
 from unma.session import AdminRequired
 
 
-render_template = decorate_function(render_template, page='department')
+render_template = decorate_function(render_template, page='department', title='UNMA - Program Studi')
 
 
 class DepartmentForm(FlaskForm):

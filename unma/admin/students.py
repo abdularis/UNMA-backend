@@ -15,7 +15,7 @@ from unma.session import AdminRequired
 from unma.ajaxutil import create_response, STAT_SUCCESS, STAT_ERROR, STAT_INVALID
 
 
-render_template = decorate_function(render_template, page='student')
+render_template = decorate_function(render_template, page='student', title='UNMA - Mahasiswa')
 
 
 class StudentForm(FlaskForm):

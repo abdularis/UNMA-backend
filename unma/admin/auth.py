@@ -8,9 +8,12 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
 from wtforms.validators import InputRequired
 
+from unma.common import decorate_function
 from unma.database import db_session
 from unma.models import Admin
 from unma.session import RedirectIfLogin, LoginRequired, SessionManager
+
+render_template = decorate_function(render_template, title='UNMA - Admin Login')
 
 
 class LoginForm(FlaskForm):

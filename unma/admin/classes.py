@@ -14,7 +14,7 @@ from unma.models import Class, ClassTypes, Department
 from unma.session import AdminRequired
 
 
-render_template = decorate_function(render_template, page='class')
+render_template = decorate_function(render_template, page='class', title='UNMA - Kelas')
 
 
 class ClassForm(FlaskForm):

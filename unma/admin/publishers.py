@@ -15,7 +15,7 @@ from unma.models import Admin, Department
 from unma.session import AdminRequired
 
 
-render_template = decorate_function(render_template, page='publisher')
+render_template = decorate_function(render_template, page='publisher', title='UNMA - Publisher')
 
 
 class PublisherForm(FlaskForm):

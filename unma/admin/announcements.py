@@ -26,7 +26,7 @@ from unma.session import LoginRequired
 from unma.htmlfilter import filter_html
 from unma import app
 
-render_template = decorate_function(render_template, page='publish')
+render_template = decorate_function(render_template, page='publish', title='UNMA - Pengumuman')
 
 
 RECEIVER_TYPE_DEPARTMENT = (1, 'Prodi')

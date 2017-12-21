@@ -24,7 +24,7 @@
         </div>
 
         <div class="navbar-nav">
-            <a href="{{ url_for('admin.profile_detail') }}" class="nav-item nav-link ml-3"><span class="icon-user"> ({{ g.curr_user.name }}) </a>
+            <a href="{{ url_for('admin.profile_detail') }}" class="nav-item nav-link ml-3 {{ 'active' if page == 'profile' }}"><span class="icon-user"> ({{ g.curr_user.name }}) </a>
             <a class="nav-item nav-link ml-3" href="{{ url_for('admin.logout') }}">Logout</a>
         </div>
     </div>

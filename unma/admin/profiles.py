@@ -8,9 +8,12 @@ from wtforms import StringField, PasswordField
 from wtforms.validators import InputRequired
 
 from unma.admin.wtformutil import UniqueValue
+from unma.common import decorate_function
 from unma.database import db_session
 from unma.models import Admin
 from unma.session import LoginRequired, SessionManager
+
+render_template = decorate_function(render_template, page='profile', title='UNMA - Detail Profile')
 
 
 class UpdatePasswordForm(FlaskForm):

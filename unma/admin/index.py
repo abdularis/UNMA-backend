@@ -11,4 +11,4 @@ class IndexView(View):
     decorators = [LoginRequired('admin.login')]
 
     def dispatch_request(self):
-        return render_template('admin/index.html')
+        return render_template('admin/index.html', title='UNMA Mobile Announcement')
