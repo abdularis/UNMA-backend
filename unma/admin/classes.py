@@ -63,7 +63,7 @@ def get_class(obj_id):
     return db_session.query(Class).filter(Class.id == obj_id).first()
 
 
-class _CreateView(MethodView):
+class CreateView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self):
@@ -94,7 +94,7 @@ class _CreateView(MethodView):
             btn_primary='Tambah')
 
 
-class _ReadView(MethodView):
+class ReadView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self):
@@ -103,7 +103,7 @@ class _ReadView(MethodView):
         return render_template('admin/classes.html')
 
 
-class _UpdateView(MethodView):
+class UpdateView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self, obj_id):
@@ -142,7 +142,7 @@ class _UpdateView(MethodView):
             btn_primary='Perbarui')
 
 
-class _DeleteView(MethodView):
+class DeleteView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self, obj_id):
@@ -163,8 +163,8 @@ class _DeleteView(MethodView):
 
 CrudClass = CrudRouter(
     'class', 'classes',
-    _CreateView,
-    _ReadView,
-    _UpdateView,
-    _DeleteView
+    CreateView,
+    ReadView,
+    UpdateView,
+    DeleteView
 )

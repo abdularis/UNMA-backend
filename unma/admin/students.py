@@ -70,7 +70,7 @@ def get_student(student_id):
     return db_session.query(Student).filter(Student.id == student_id).first()
 
 
-class _CreateView(MethodView):
+class CreateView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self):
@@ -103,7 +103,7 @@ class _CreateView(MethodView):
             classes=res)
 
 
-class _ReadView(MethodView):
+class ReadView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self):
@@ -112,7 +112,7 @@ class _ReadView(MethodView):
         return render_template('admin/students.html')
 
 
-class _UpdateView(MethodView):
+class UpdateView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self, obj_id):
@@ -153,7 +153,7 @@ class _UpdateView(MethodView):
             btn_primary='Perbarui')
 
 
-class _DeleteView(MethodView):
+class DeleteView(MethodView):
     decorators = [AdminRequired('admin.login')]
 
     def get(self, obj_id):
@@ -174,8 +174,8 @@ class _DeleteView(MethodView):
 
 CrudStudent = CrudRouter(
     'student', 'students',
-    _CreateView,
-    _ReadView,
-    _UpdateView,
-    _DeleteView
+    CreateView,
+    ReadView,
+    UpdateView,
+    DeleteView
 )

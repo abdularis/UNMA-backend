@@ -137,7 +137,7 @@ def get_receiver_list(receiver_type):
     return []
 
 
-class _CreateView(MethodView):
+class CreateView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
     def get(self):
@@ -259,7 +259,7 @@ class AnnouncementReceiverDetailViewModel:
         self.receivers = announcement.students
 
 
-class _ReadView(MethodView):
+class ReadView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
     def get(self, obj_id=None):
@@ -279,7 +279,7 @@ class _ReadView(MethodView):
                 elif request.args.get('act') == 'resend_notification':
                     students = db_session.query(Student).filter(StudentAnnouncementAssoc.announce_id == model.id, Student.id == StudentAnnouncementAssoc.student_id).all()
                     print("Students: %d" % len(students))
-                    if _CreateView.send_notification(model, students):
+                    if CreateView.send_notification(model, students):
                         flash('Notifikasi berhasil dikirim!', category='succ')
                     html_extra = render_template('admin/partials/anc/announce_save_notif.html')
                     return create_response(STAT_SUCCESS, html_extra=html_extra)
@@ -288,7 +288,7 @@ class _ReadView(MethodView):
         return render_template('admin/announcements.html')
 
 
-class _UpdateView(MethodView):
+class UpdateView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
     def get(self, obj_id):
@@ -319,8 +319,8 @@ class _UpdateView(MethodView):
                 if form.receiver.data:
                     db_session.query(StudentAnnouncementAssoc)\
                         .filter(StudentAnnouncementAssoc.announce_id == model.id).delete()
-                    students = _CreateView.get_students_from_receiver_type(form)
-                    _CreateView.associate_announcement_with_students(model, students)
+                    students = CreateView.get_students_from_receiver_type(form)
+                    CreateView.associate_announcement_with_students(model, students)
                 else:
                     for student_assoc in model.students:
                         students.append(student_assoc.student)
@@ -333,7 +333,7 @@ class _UpdateView(MethodView):
                         model.attachment = attachment_filename
                 db_session.commit()
 
-                _CreateView.send_notification(model, students)
+                CreateView.send_notification(model, students)
 
                 flash('Pengumuman berhasil di Update!', category='succ')
 
@@ -358,7 +358,7 @@ class _UpdateView(MethodView):
             attach_file_name=attach_file_name)
 
 
-class _DeleteView(MethodView):
+class DeleteView(MethodView):
     decorators = [LoginRequired('admin.login')]
 
     def get(self, obj_id):
@@ -383,9 +383,9 @@ class _DeleteView(MethodView):
 
 CrudAnnouncement = CrudRouter(
     'announcement', 'announcements',
-    _CreateView,
-    _ReadView,
-    _UpdateView,
-    _DeleteView,
+    CreateView,
+    ReadView,
+    UpdateView,
+    DeleteView,
     url_param_t='uuid'
 )

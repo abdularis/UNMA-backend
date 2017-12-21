@@ -1,23 +1,30 @@
 {% extends 'layout.html' %}
+{% block head %}
+<style type="text/css">
+.col-label {
+    color: #666;
+}
+</style>
+{% endblock %}
 {% block body %}
 {% include 'includes/navbar.html' %}
 
 <div class="container pt-4 pb-4">
     <div class="card card-body mb-3">
         <div class="row mt-1 mb-1">
-            <span class="col-4">Judul:</span>
-            <span class="col-8"><b>{{ obj.title }}</b> <span class="text-muted">({{ obj.public_id }})</span></span>
+            <span class="col-sm-2 text-right col-label">Judul:</span>
+            <span class="col-sm-10"><b>{{ obj.title }}</b> <span class="text-muted">({{ obj.public_id }})</span></span>
         </div>
         <div class="row mt-1 mb-1">
-            <span class="col-4">Publisher:</span>
-            <span class="col-8">
+            <span class="col-sm-2 text-right col-label">Publisher:</span>
+            <span class="col-sm-10">
                 <span class="icon-user">
                 {{ obj.publisher }}
             </span>
         </div>
         <div class="row mt-1 mb-1">
-            <span class="col-4">Attachment:</span>
-            <span class="col-8">
+            <span class="col-sm-2 text-right col-label">Attachment:</span>
+            <span class="col-sm-10">
                 {% if obj.attachment %}
                     <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, file=obj.attachment) }}">{{obj.attachment}} <span class="icon-download" aria-hidded="true"></span></a>
                 {% else %}
@@ -26,22 +33,22 @@
             </span>
         </div>
         <div class="row mt-1 mb-1">
-            <span class="col-4">Tgl. Publish:</span>
-            <span class="col-8">
+            <span class="col-sm-2 text-right col-label">Tgl. Publish:</span>
+            <span class="col-sm-10">
                 <span class="icon-calendar-empty">
                 {{ obj.date_created }}
             </span>
         </div>
         <div class="row mt-1 mb-1">
-            <span class="col-4">Tgl. Diperbarui:</span>
-            <span class="col-8">
+            <span class="col-sm-2 text-right col-label">Tgl. Diperbarui:</span>
+            <span class="col-sm-10">
                 <span class="icon-calendar-empty">
                 {{ obj.last_updated }}
             </span>
         </div>
         <div class="row mt-1 mb-1">
-            <span class="col-4">Penerima:</span>
-            <span class="col-8">{{ obj.receivers }} Mahasiswa - <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, act='receiver_detail') }}">Lihat detail</a></span>
+            <span class="col-sm-2 text-right col-label">Penerima:</span>
+            <span class="col-sm-10">{{ obj.receivers }} Mahasiswa - <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, act='receiver_detail') }}">Lihat detail</a></span>
         </div>
 
         <div class="mt-3">

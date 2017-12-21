@@ -1,5 +1,6 @@
 # auth.py
 # Created by abdularis on 08/10/17
+import datetime
 
 from flask import redirect, url_for, render_template, flash
 from flask.views import View
@@ -27,6 +28,8 @@ class LoginView(View):
             admin = db_session.query(Admin).filter(Admin.username == form.username.data).first()
             if admin and admin.verify_password(form.password.data):
                 SessionManager.set_session(admin)
+                admin.last_login = datetime.datetime.utcnow()
+                db_session.commit()
                 return redirect(url_for('admin.index'))
             flash("Username & password doesn't match!", category='err')
         return render_template('admin/login.html', title='Admin Login', form=form)

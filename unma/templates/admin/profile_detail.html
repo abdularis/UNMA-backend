@@ -1,0 +1,86 @@
+{% extends 'layout.html' %}
+{% from 'includes/_form_helpers.html' import render_field %}
+{% block head %}
+<style type="text/css">
+.col-label {
+    color: #666;
+}
+</style>
+{% endblock %}
+{% block body %}
+{% include 'includes/navbar.html' %}
+<div class="container mt-5">
+    
+    {% include 'includes/_flash_to_alert.html' %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header"><h2><span class="icon-user"> My Profile</h2></div>
+                <div class="card-body">
+                    <div class="row mt-1 mb-1">
+                        <span class="col-sm-3 text-right col-label">Nama:</span>
+                        <span class="col-sm-9">{{ profile.name }}</span>
+                    </div>
+
+                    <div class="row mt-1 mb-1">
+                        <span class="col-sm-3 text-right col-label">Username:</span>
+                        <span class="col-sm-9">{{ profile.username }}</span>
+                    </div>
+
+                    <div class="row mt-1 mb-1">
+                        <span class="col-sm-3 text-right col-label">Password Hash:</span>
+                        <span class="col-sm-9">{{ profile.password }}</span>
+                    </div>
+
+                    <div class="row mt-1 mb-1">
+                        <span class="col-sm-3 text-right col-label">Tgl. Dibuat:</span>
+                        <span class="col-sm-9"><span class="icon-calendar-empty"> {{ profile.date_created }}</span>
+                    </div>
+
+                    <div class="row mt-1 mb-1">
+                        <span class="col-sm-3 text-right col-label">Terakhir Login:</span>
+                        <span class="col-sm-9"><span class="icon-calendar-empty"> {{ profile.last_login }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Update Profile Info</h5>
+                </div>
+                <form method="post" action="{{ url_for('admin.profile_update_profile') }}" class="form-horizontal">
+                    <div class="card-body">
+                        {{ form_update_profile.csrf_token }}
+                        {{ render_field(form_update_profile.name) }}
+                        {{ render_field(form_update_profile.username) }}
+                        {{ render_field(form_update_profile.password) }}
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Update</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card mt-3 mb-3">
+                <div class="card-header">
+                    <h5>Update Password</h5>
+                </div>
+                <form method="post" action="{{ url_for('admin.profile_update_password') }}" class="form-horizontal">
+                    <div class="card-body">
+                        {{ form_update_password.csrf_token }}
+                        {{ render_field(form_update_password.old_password) }}
+                        {{ render_field(form_update_password.new_password) }}
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

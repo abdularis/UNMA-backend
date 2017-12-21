@@ -1,4 +1,9 @@
-<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+<style type="text/css">
+.my-navbar {
+    min-height: 65px;
+}
+</style>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark my-navbar">
     <a href="{{ url_for('admin.index') }}" class="navbar-brand">
         <span class="icon-megaphone"></span>
         UNMA
@@ -9,18 +14,18 @@
 
     <div class="collapse navbar-collapse" id="navbarContent">
         <div class="navbar-nav mr-auto">
-            <a class="nav-item nav-link {{ 'active' if page == 'publish' }}" href="{{ url_for('admin.announcement_read') }}">Publish</a>
+            <a class="nav-item nav-link ml-3 {{ 'active' if page == 'publish' }}" href="{{ url_for('admin.announcement_read') }}">Publish</a>
             {% if g.is_admin %}
-            <a class="nav-item nav-link {{ 'active' if page == 'department' }}" href="{{ url_for('admin.department_read') }}">Prodi</a>
-            <a class="nav-item nav-link {{ 'active' if page == 'class' }}" href="{{ url_for('admin.class_read') }}">Kelas</a>
-            <a class="nav-item nav-link {{ 'active' if page == 'student' }}" href="{{ url_for('admin.student_read') }}">Mahasiswa</a>
-            <a class="nav-item nav-link {{ 'active' if page == 'publisher' }}" href="{{ url_for('admin.publisher_read') }}">Publisher</a>
+            <a class="nav-item nav-link ml-3 {{ 'active' if page == 'department' }}" href="{{ url_for('admin.department_read') }}">Prodi</a>
+            <a class="nav-item nav-link ml-3 {{ 'active' if page == 'class' }}" href="{{ url_for('admin.class_read') }}">Kelas</a>
+            <a class="nav-item nav-link ml-3 {{ 'active' if page == 'student' }}" href="{{ url_for('admin.student_read') }}">Mahasiswa</a>
+            <a class="nav-item nav-link ml-3 {{ 'active' if page == 'publisher' }}" href="{{ url_for('admin.publisher_read') }}">Publisher</a>
             {% endif %}
         </div>
 
         <div class="navbar-nav">
-            <span class="navbar-text">({{ g.curr_user }}) </span>
-            <a class="nav-item nav-link" href="{{ url_for('admin.logout') }}">Logout</a>
+            <a href="{{ url_for('admin.profile_detail') }}" class="nav-item nav-link ml-3"><span class="icon-user"> ({{ g.curr_user }}) </a>
+            <a class="nav-item nav-link ml-3" href="{{ url_for('admin.logout') }}">Logout</a>
         </div>
     </div>
 </nav>

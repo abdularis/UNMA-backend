@@ -1,0 +1,14 @@
+{% with msgs = get_flashed_messages(True) %}
+{% for msg in msgs %}
+
+{% if msg[0] == 'warn' %}
+<div class="alert alert-warning">
+{% elif msg[0] == 'succ' %}
+<div class="alert alert-success">
+    <span class="icon-ok"></span>
+{% endif %}
+    {{ msg[1] }}
+</div>
+
+{% endfor %}
+{% endwith %}
