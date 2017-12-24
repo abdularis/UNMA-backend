@@ -1,34 +1,45 @@
-{% for obj in objs %}
-<div class="card mb-3">
+<div id="announcements">
+    <div class="form-inline mb-4">
+        <input class="search form-control mr-2" placeholder="Cari judul...">
+        <button class="btn btn-outline-secondary sort" data-sort="announcement-date">Sort by Date</button>
+    </div>
+    <ul class="list-group list">
+        {% for obj in objs %}
+        <li class="list-group-item mb-3">
+                <div class="mb-1">
+                    <div class="h5">
+                        <a href="{{url_for('admin.announcement_read', obj_id=obj.public_id)}}" class="text-dark announcement-title">
+                            {{ obj.title }}
+                        </a>
+                    </div>
+                    <div>
+                        <span class="small text-muted announcement-date"><span class="icon-calendar-empty"></span> {{ obj.date_created }}</span>
+                        <span class="badge badge-secondary ml-2"><span class="icon-user"></span> {{ obj.publisher }}</span>
+                    </div>
+                </div>
 
-    <div class="card-body">
-        <div class="mb-3">
-            <div class="card-title h3">
-                <a href="{{url_for('admin.announcement_read', obj_id=obj.public_id)}}" class="text-dark">
-                    {{ obj.title }}
+                {% if obj.attachment %}
+                <span>Attachment:</span>
+                <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, file=obj.attachment) }}">
+                    {{obj.attachment}}
+                    <span class="icon-download" aria-hidded="true"></span>
                 </a>
-                <hr>
-            </div>
-            <div>
-                <span class="small text-muted"><span class="icon-calendar-empty"></span> {{ obj.date_created }}</span>
-                <span class="badge badge-secondary ml-2"><span class="icon-user"></span> {{ obj.publisher }}</span>
-            </div>
-        </div>
-
-        <div>
-        {% if obj.attachment %}
-            <span>Attachment:</span>
-            <a href="{{ url_for('admin.announcement_read', obj_id=obj.public_id, file=obj.attachment) }}">
-                {{obj.attachment}}
-                <span class="icon-download" aria-hidded="true"></span>
-            </a>
-        {% endif %}
-            <button type="button" class="float-right btn btn-sm btn-link text-danger js-btn-delete" data-href="{{url_for('admin.announcement_delete', obj_id=obj.public_id)}}">
-                <span class="icon-trash-empty"></span>
-                Hapus
-            </button>
-        </div>
-
-    </div>    
+                {% else %}
+                <span class="text-muted">Tidak ada attachment</span>
+                {% endif %}
+                <button type="button" class="float-right btn btn-sm btn-link text-danger js-btn-delete" data-href="{{url_for('admin.announcement_delete', obj_id=obj.public_id)}}">
+                    <span class="icon-trash-empty"></span>
+                    Hapus
+                </button>
+        </li>
+        {% endfor %}    
+    </ul>
 </div>
-{% endfor %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/list.min.js') }}"></script>
+<script type="text/javascript">
+var options = {
+    valueNames: ['announcement-title', 'announcement-date']
+};
+
+var announcementList = new List('announcements', options);
+</script>
