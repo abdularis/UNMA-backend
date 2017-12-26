@@ -1,5 +1,7 @@
 # fcm.py
 # Created by abdularis on 24/10/17
+#
+# See firebase notification documentation for more details
 
 import json
 import requests
@@ -7,21 +9,6 @@ import requests
 
 FCM_URL = 'https://fcm.googleapis.com/fcm/send'
 MAX_REG_TOKENS = 1000
-
-android_notif_key = [
-    'title',
-    'body',
-    'android_channel_id',
-    'icon',
-    'sound',
-    'tag',
-    'color',
-    'click_action',
-    'body_loc_key',
-    'body_loc_args',
-    'title_loc_key',
-    'title_loc_args'
-]
 
 reg_id_errors = [
     'MissingRegistration',
@@ -31,6 +18,11 @@ reg_id_errors = [
 
 
 def _send_request(server_key, fcm_message):
+    """
+    send request to firebase server
+
+    :return: tuple (http response code, FcmResponseMessage or raw text if http resp != 200)
+    """
     json_payload = str(fcm_message)
 
     headers = {
@@ -46,6 +38,9 @@ def _send_request(server_key, fcm_message):
 
 
 class FcmMessage:
+    """
+    Encapsulate firebase notification message
+    """
 
     def __init__(self, registration_ids=None, to=None, condition=None, notification=None, data=None):
         if to:
@@ -65,10 +60,23 @@ class FcmMessage:
             self.data = data
 
     def __str__(self):
+        """
+        Dumps a json string from this class instance
+        """
         return json.dumps(self.__dict__)
 
 
 class FcmResponseMessage:
+    """
+    This class represents a firebase notification request response
+
+    request: FcmMessage object (request)
+    multicast_id:
+    success:
+    failure:
+    canonical_ids:
+    results: list of tuples of size two (registration_id, result dictionary from fcm results object)
+    """
 
     def __init__(self, fcm_request_msg, json_msg_resp):
         self.request = fcm_request_msg
@@ -79,17 +87,35 @@ class FcmResponseMessage:
 
         self.results = []
         if hasattr(self.request, 'registration_ids') and json_msg_resp.get('results'):
+            # it has sent to a list of registration ids
             self.results = [res for res in zip(self.request.registration_ids, json_msg_resp['results'])]
         elif hasattr(self.request, 'to') and json_msg_resp.get('results'):
+            # it has sent to one registration only
             self.results = [(self.request.to, json_msg_resp['results'][0])]
 
 
 class FcmNotification:
+    """
+    FcmNotification class is used to send a notification using firebase notification API
+    """
 
     def __init__(self, server_key):
+        """
+        constructor
+
+        :param server_key: Firebase server key
+        """
         self.server_key = server_key
 
     def send(self, registration_ids, notification=None, data=None):
+        """
+        Send a firebase message to a list of users identified by registration ids
+
+        :param registration_ids: list of token/registration id
+        :param notification: notification dictionary data
+        :param data: custom data to be send
+        :return: list of tuple (http response code, FcmResponseMessage or raw text if http resp != 200)
+        """
         responses = []
         curr_idx = 0
         while registration_ids[curr_idx:MAX_REG_TOKENS]:
@@ -106,9 +132,9 @@ class FcmNotification:
         Send a firebase message to a specific user identified by registration id in 'to' parameter
 
         :param to: token/registration id (not topics)
-        :param notification:
-        :param data:
-        :return: FcmResponseMessage object
+        :param notification: notification dictionary data
+        :param data: custom data to be send
+        :return: tuple (http response code, FcmResponseMessage or raw text if http resp != 200)
         """
         msg = FcmMessage(to=to, notification=notification, data=data)
         return _send_request(self.server_key, msg)

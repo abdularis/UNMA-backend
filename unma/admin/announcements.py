@@ -237,11 +237,13 @@ class CreateView(MethodView):
                 responses = f.send([obj[0] for obj in reg_ids], data=data)
                 for status_code, resp_msg in responses:
                     if status_code == 200 and len(resp_msg.results) > 0:
-                        error = resp_msg.results[0][1].get('error')
-                        if error in fcm.reg_id_errors:
-                            fcm_token = resp_msg.results[0][0]
-                            db_session.query(StudentToken).filter(StudentToken.fcm_token == fcm_token).delete()
-                            logging.info('Account tokens deleted cause %s is %s' % (fcm_token, error))
+                        for result in resp_msg.results:
+                            error = result[1].get('error')
+                            if error in fcm.reg_id_errors:
+                                fcm_token = result[0]
+                                db_session.query(StudentToken).filter(StudentToken.fcm_token == fcm_token).delete()
+                                logging.info('Account tokens deleted cause %s is %s' % (fcm_token, error))
+
                 db_session.commit()
                 return True
             except requests.exceptions.ConnectionError as msg:
