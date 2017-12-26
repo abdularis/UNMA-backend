@@ -29,13 +29,14 @@
 
 <script type="text/javascript" src="{{ url_for('static', filename='js/me/crud.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/me/listloader.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/me/datatableutil.js') }}"></script>
 <script type="text/javascript">
 $(function() {
     listLoader("{{ url_for('admin.department_read', act='list') }}", ".js-dynamic-table", function(){
         addCallbackToJsBtnUpdate();
         addCallbackToJsBtnDelete();
 
-        $('.js-dynamic-table').DataTable();
+        setDataTable('.js-dynamic-table');
     });
 });
 </script>

@@ -26,7 +26,7 @@
     <table class="table table-hover table-sm js-dynamic-table">
         <thead class="thead-default">
             <tr>
-                <th># ({{objs|length}})</th>
+                <th># ({{obj.receivers|length}})</th>
                 <th>NPM</th>
                 <th>Nama</th>
                 <th>Dibaca</th>
@@ -49,9 +49,10 @@
 {% include 'includes/_js_dep.html' %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/datatables.min.css') }}">
 <script type="text/javascript" src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/me/datatableutil.js') }}"></script>
 <script type="text/javascript">
 $(function() {
-    $('.js-dynamic-table').DataTable();
+    setDataTable('.js-dynamic-table');
 })
 </script>
 {% endblock %}
