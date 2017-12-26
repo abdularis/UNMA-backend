@@ -2,6 +2,11 @@
 # Created by abdularis on 07/11/17
 
 import functools
+import datetime
+
+
+def time_now():
+    return datetime.datetime.utcnow().replace(microsecond=0)
 
 
 def decorate_function(f, **add_kwargs):

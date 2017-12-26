@@ -1,6 +1,5 @@
 # auth.py
 # Created by abdularis on 08/10/17
-import datetime
 
 from flask import redirect, url_for, render_template, flash
 from flask.views import View
@@ -8,7 +7,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
 from wtforms.validators import InputRequired
 
-from unma.common import decorate_function
+from unma.common import decorate_function, time_now
 from unma.database import db_session
 from unma.models import Admin
 from unma.session import RedirectIfLogin, LoginRequired, SessionManager
@@ -31,7 +30,7 @@ class LoginView(View):
             admin = db_session.query(Admin).filter(Admin.username == form.username.data).first()
             if admin and admin.verify_password(form.password.data):
                 SessionManager.set_session(admin)
-                admin.last_login = datetime.datetime.utcnow()
+                admin.last_login = time_now()
                 db_session.commit()
                 return redirect(url_for('admin.index'))
             flash("Username & password doesn't match!", category='err')

@@ -9,6 +9,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
 from wtforms.validators import InputRequired
 
+from unma.common import time_now
 from unma.database import db_session
 from unma.models import Student, StudentToken
 from .authutil import token_required, create_access_token
@@ -35,7 +36,7 @@ class UpdatePasswordForm(FlaskForm):
 
 def authorize_user(student, fcm_token):
     token, payload = create_access_token(student.id, student.username)
-    student.last_login = datetime.datetime.utcnow()
+    student.last_login = time_now()
 
     stud_token = StudentToken()
     stud_token.student_id = student.id
