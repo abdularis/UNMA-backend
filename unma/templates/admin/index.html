@@ -3,8 +3,47 @@
 {% include 'includes/navbar.html' %}
 
 <div class="container">
-    <div class="jumbotron mt-3">
-        <h3>Hello</h3>
+    <div class="row mt-3">
+
+        <div class="col">
+            <div class="card mb-3">
+                <div class="card-header text-white bg-primary"><b>Pengumuman Terbaru</b></div>
+                <div class="card-body">
+                    {% if model.latest_announcements %}
+                    <ul class="list-group">
+                        {% for latest_announcement in model.latest_announcements %}
+                        <li class="list-group-item list-group-item-action">
+                            <div class="text-muted mb-2">
+                                <span class="small announcement-date"><span class="icon-calendar-empty"></span> {{ latest_announcement.date_created }}</span>
+                                <span class="ml-2"><span class="icon-user"></span> {{ latest_announcement.publisher }}</span>
+                            </div>
+                            <div>
+                                {{ latest_announcement.title }} - <a href="{{ url_for('admin.announcement_read', obj_id=latest_announcement.public_id) }}"><u>Lihat detail</u></a>
+                                - <a href="{{ url_for('admin.announcement_read', obj_id=latest_announcement.public_id, act='receiver_detail') }}"><u>Lihat penerima</u></a>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span class="alert alert-info">Belum ada pengumuman yang dipublish!</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="jumbotron col ml-3">
+            <div class="card">
+                <img src="{{ url_for('static', filename='images/figure_phone.png') }}" class="card-img-top mt-3" style="max-width: 12rem; margin: 0 auto;">
+                <div class="card-body">
+                    <h4 class="card-title">Memulai</h4>
+                    <div class="card-text mb-3">
+                        Selamat datang <i>{{ g.curr_user.name }}</i> di UNMA Mobile Announcement web admin interface. 
+                        Klik Publish untuk memulai mempublish pengumuman.</div>
+                    <a href="{{ url_for('admin.announcement_read') }}" class="btn btn-primary">Publish</a>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
