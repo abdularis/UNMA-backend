@@ -1,0 +1,8 @@
+{
+    "id": 1,
+    "prodi_id": 2,
+    "name": "A",
+    "year": 2014,
+    "type": 1,
+    "students_csv_path": "data/classes/tif_a_2014.csv"
+}

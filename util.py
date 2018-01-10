@@ -3,17 +3,23 @@
 
 import os
 import csv
+import json
 
 from unma import app
-from unma.models import BaseTable, Admin, Department
+from unma.models import BaseTable, Admin, Department, Class, Student
 
 
 CSV_ADMIN = 'data/admin.csv'
 CSV_PUBLISHERS = 'data/publishers.csv'
 CSV_DEPARTMENTS = 'data/departments.csv'
+CSV_CLASSES = 'data/classes.csv'
+CLASSES_DESCRIPTOR = [
+    'data/classes/tif_a_2014.json'
+]
 
 
-def get_admin():
+def init_admin(db_session):
+    print("[*] Initialize admin account...")
     with open(CSV_ADMIN) as csv_file:
         data = csv.reader(csv_file)
         for row in data:
@@ -22,11 +28,12 @@ def get_admin():
             admin.username = row[1]
             admin.password = row[2]
             admin.role = 'ADM'
-            return admin
+            db_session.add(admin)
+            print('\tAdmin ditambahkan: %s' % admin.name)
 
 
-def get_publishers():
-    publisher_list = []
+def init_publishers(db_session):
+    print("[*] Initialize publisher accounts...")
     with open(CSV_PUBLISHERS) as csv_file:
         data = csv.reader(csv_file)
         for row in data:
@@ -35,19 +42,47 @@ def get_publishers():
             publisher.username = row[1]
             publisher.password = row[2]
             publisher.role = 'PUB'
-            publisher_list.append(publisher)
-    return publisher_list
+            db_session.add(publisher)
+            print('\tPublisher ditambahkan: %s, %s' % (publisher.name, publisher.username))
 
 
-def get_departments():
-    departments = []
+def init_departments(db_session):
+    print("[*] Initialize departments table...")
     with open(CSV_DEPARTMENTS) as csv_file:
         data = csv.reader(csv_file)
         for row in data:
             dep = Department()
-            dep.name = row[0]
-            departments.append(dep)
-    return departments
+            dep.id = row[0]
+            dep.name = row[1]
+            db_session.add(dep)
+            print('\tProdi ditambahkan: %s' % (dep.name))
+
+
+def init_classes(db_session):
+    print("[*] Initialize classes and its students...")
+    for file_path in CLASSES_DESCRIPTOR:
+        with open(file_path, 'r') as file:
+            c_json = json.loads(file.read())
+            c = Class()
+            c.id = c_json['id']
+            c.department_id = c_json['prodi_id']
+            c.name = c_json['name']
+            c.year = c_json['year']
+            c.type = c_json['type']
+            db_session.add(c)
+            print('\t- Kelas: %d, %d, %s %d' % (c.department_id, c.year, c.name, c.type))
+
+            csv_file_path = c_json['students_csv_path']
+            with open(csv_file_path) as csv_file:
+                csv_data = csv.reader(csv_file)
+                for row in csv_data:
+                    stud = Student()
+                    stud.name = row[0]
+                    stud.username = row[1]
+                    stud.class_id = c.id
+                    stud.password = '123456789'
+                    db_session.add(stud)
+                    print('\t\t- Mahasiswa ditambahkan: %s, %s' % (stud.name, stud.username))
 
 
 def gen_db():
@@ -61,19 +96,10 @@ def gen_db():
     session = sessionmaker(bind=engine)
     db_session = session()
 
-    # initialize admin
-    print("[*] Initialize admin account...")
-    db_session.add(get_admin())
-
-    # initialize publishers
-    print("[*] Initialize publisher accounts...")
-    for pub in get_publishers():
-        db_session.add(pub)
-
-    # initialize departments
-    print("[*] Initialize departments table...")
-    for dept in get_departments():
-        db_session.add(dept)
+    init_admin(db_session)
+    init_publishers(db_session)
+    init_departments(db_session)
+    init_classes(db_session)
 
     db_session.commit()
     print("[*] Database successfully generated")
