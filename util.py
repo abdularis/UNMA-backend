@@ -14,7 +14,10 @@ CSV_PUBLISHERS = 'data/publishers.csv'
 CSV_DEPARTMENTS = 'data/departments.csv'
 CSV_CLASSES = 'data/classes.csv'
 CLASSES_DESCRIPTOR = [
-    'data/classes/tif_a_2014.json'
+    'data/classes/tii_a_2014.json',
+    'data/classes/tif_a_2014.json',
+    'data/classes/tim_a_2014.json',
+    'data/classes/tis_a_2014.json'
 ]
 
 
