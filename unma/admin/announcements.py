@@ -24,7 +24,7 @@ from unma.media import save_uploaded_file, get_upload_folder, get_media_folder
 from unma.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Department, Class
 from unma.session import LoginRequired
 from unma.htmlfilter import filter_html
-from unma import app
+from unma.unmaapp import app
 
 render_template = decorate_function(render_template, page='publish', title='UNMA - Pengumuman')
 

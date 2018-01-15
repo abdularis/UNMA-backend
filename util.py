@@ -5,7 +5,6 @@ import os
 import csv
 import json
 
-from unma import app
 from unma.models import BaseTable, Admin, Department, Class, Student
 
 
@@ -19,6 +18,12 @@ CLASSES_DESCRIPTOR = [
     'data/classes/tim_a_2014.json',
     'data/classes/tis_a_2014.json'
 ]
+
+
+def _write_json_config(dict_config, file_path):
+    with open(file_path, 'w') as f:
+        json.dump(dict_config, f)
+        print('\tConfig created: %s' % file_path)
 
 
 def init_admin(db_session):
@@ -88,12 +93,14 @@ def init_classes(db_session):
                     print('\t\t- Mahasiswa ditambahkan: %s, %s' % (stud.name, stud.username))
 
 
-def gen_db():
+def gen_db(url_connection, db_name):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
     print("[*] Creating database tables...")
-    engine = create_engine(app.config['DATABASE'])
+    engine = create_engine(url_connection)
+    engine.execute('CREATE DATABASE {}'.format(db_name))
+    engine.execute('USE {}'.format(db_name))
     BaseTable.metadata.create_all(engine)
 
     session = sessionmaker(bind=engine)
@@ -105,14 +112,22 @@ def gen_db():
     init_classes(db_session)
 
     db_session.commit()
+    cfg = {
+        "DATABASE": url_connection,
+        "DATABASE_NAME": db_name
+    }
+    _write_json_config(cfg, 'unma/config/db_config.json')
     print("[*] Database successfully generated")
 
 
-def gen_app_dirs():
+def gen_app_dirs(upload_folder):
     # Initialize all needed directories
-    if not os.path.exists(app.instance_path):
-        print("[*] Creating instance app directory...")
-        os.makedirs(app.instance_path, exist_ok=True)
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    if not os.path.exists(upload_folder):
         print("[*] Creating upload directory...")
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        os.makedirs(upload_folder, exist_ok=True)
+
+        _write_json_config({"UPLOAD_FOLDER": upload_folder}, 'unma/config/path_config.json')
+
+
+def gen_fcm_config(fcm_server_key):
+    _write_json_config({"FCM_SERVER_KEY": fcm_server_key}, 'unma/config/fcm_config.json')

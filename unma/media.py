@@ -5,7 +5,7 @@ import os
 import mimetypes
 
 from werkzeug.utils import secure_filename
-from unma import app
+from unma.unmaapp import app
 
 
 def get_media_folder(announcement_id):

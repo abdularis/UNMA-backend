@@ -6,7 +6,7 @@ import jwt
 
 from flask import request, g
 
-from unma import app
+from unma.unmaapp import app
 from unma.database import db_session
 from unma.models import StudentToken
 from .response import unauth_response
