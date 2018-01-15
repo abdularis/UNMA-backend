@@ -101,7 +101,6 @@ def gen_db(url_connection, db_name, create_db=True):
     if create_db:
         print("[*] Creating new database... (%s)" % db_name)
         engine.execute('CREATE DATABASE {}'.format(db_name))
-    engine.execute('USE {}'.format(db_name))
 
     print("[*] Creating database tables...")
     BaseTable.metadata.create_all(engine)
