@@ -7,13 +7,9 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Initializer untuk unma web admin app")
     parser.add_argument('database_url', type=str, help="URL untuk koneksi database. e.g. mysql+pymysql://uname:password@server")
-    parser.add_argument('database_name', type=str, help="Nama database")
     parser.add_argument('upload_folder', type=str, help="Folder dimana file upload akan disimpan.")
     parser.add_argument('fcm_server_key', type=str, help="Firebase server key.")
-    parser.add_argument('--dont_create_db', action="store_true", help="Tidak akan membuat database baru pada db server.")
     args = parser.parse_args()
-
-    create_db = not args.dont_create_db
 
     print("----- Saving FCM server key -----")
     util.gen_fcm_config(args.fcm_server_key)
@@ -22,6 +18,6 @@ if __name__ == "__main__":
     util.gen_app_dirs(args.upload_folder)
 
     print("----- Database Generation -----")
-    util.gen_db(args.database_url, args.database_name, create_db)
+    util.gen_db(args.database_url)
 
     print("=== Berhasil, berhasil, berhasil... Yey :) ===")

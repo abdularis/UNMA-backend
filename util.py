@@ -93,15 +93,11 @@ def init_classes(db_session):
                     print('\t\t- Mahasiswa ditambahkan: %s, %s' % (stud.name, stud.username))
 
 
-def gen_db(url_connection, db_name, create_db=True):
+def gen_db(url_connection):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
     engine = create_engine(url_connection)
-    if create_db:
-        print("[*] Creating new database... (%s)" % db_name)
-        engine.execute('CREATE DATABASE {}'.format(db_name))
-
     print("[*] Creating database tables...")
     BaseTable.metadata.create_all(engine)
 
@@ -116,7 +112,6 @@ def gen_db(url_connection, db_name, create_db=True):
     db_session.commit()
     cfg = {
         "DATABASE": url_connection,
-        "DATABASE_NAME": db_name
     }
     _write_json_config(cfg, 'unma/config/db_config.json')
     print("[*] Database successfully generated")
