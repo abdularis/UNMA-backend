@@ -123,7 +123,7 @@ def gen_app_dirs(upload_folder):
         print("[*] Creating upload directory...")
         os.makedirs(upload_folder, exist_ok=True)
 
-        _write_json_config({"UPLOAD_FOLDER": upload_folder}, 'unma/config/path_config.json')
+    _write_json_config({"UPLOAD_FOLDER": upload_folder}, 'unma/config/path_config.json')
 
 
 def gen_fcm_config(fcm_server_key):
