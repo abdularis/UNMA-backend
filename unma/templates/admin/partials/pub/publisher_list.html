@@ -15,7 +15,7 @@
             {{ obj.name }}
         </td>
         <td>{{ obj.username }}</td>
-        <td>{{ obj.date_created }}</td>
+        <td>{{ momentjs(obj.date_created.isoformat() ~ "+00:00").format('MMM DD YYYY, HH:mm') }}</td>
         <td>
             <button type="button" class="btn btn-sm btn-warning js-btn-update" data-href="{{url_for('admin.publisher_update', obj_id=obj.id)}}">
                 Edit

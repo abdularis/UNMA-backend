@@ -6,6 +6,7 @@
     color: #666;
 }
 </style>
+{% include 'includes/_js_dep.html' %}
 {% endblock %}
 {% block body %}
 {% include 'includes/navbar.html' %}
@@ -35,12 +36,12 @@
 
                     <div class="row mt-1 mb-1">
                         <span class="col-sm-3 text-right col-label">Tgl. Dibuat:</span>
-                        <span class="col-sm-9"><span class="icon-calendar-empty"> {{ profile.date_created }}</span>
+                        <span class="col-sm-9"><span class="icon-calendar-empty"> {{ momentjs(profile.date_created.isoformat() ~ "+00:00").format('MMMM DD YYYY, HH:mm') }}</span>
                     </div>
 
                     <div class="row mt-1 mb-1">
                         <span class="col-sm-3 text-right col-label">Terakhir Login:</span>
-                        <span class="col-sm-9"><span class="icon-calendar-empty"> {{ profile.last_login }}</span>
+                        <span class="col-sm-9"><span class="icon-calendar-empty"> {{ momentjs(profile.last_login.isoformat() ~ "+00:00").format('MMMM DD YYYY, HH:mm') }}</span>
                     </div>
                 </div>
             </div>

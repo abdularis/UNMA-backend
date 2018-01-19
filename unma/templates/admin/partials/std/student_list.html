@@ -18,8 +18,8 @@
         </td>
         <td>{{ obj.my_class }}</td>
         <td>{{ obj.username }}</td>
-        <td>{{ obj.date_created }}</td>
-        <td>{{ obj.last_login }}</td>
+        <td>{{ momentjs(obj.date_created.isoformat() ~ "+00:00").format('MMM DD YYYY, HH:mm') }}</td>
+        <td>{{ momentjs(obj.last_login.isoformat() ~ "+00:00").format('MMM DD YYYY, HH:mm') if obj.last_login else '-' }}</td>
         <td>
             <button type="button" class="btn btn-sm btn-warning js-btn-update" data-href="{{url_for('admin.student_update', obj_id=obj.id)}}">
                 Edit

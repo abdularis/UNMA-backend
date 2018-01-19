@@ -5,6 +5,7 @@
     color: #666;
 }
 </style>
+{% include 'includes/_js_dep.html' %}
 {% endblock %}
 {% block body %}
 {% include 'includes/navbar.html' %}
@@ -35,16 +36,14 @@
         <div class="row mt-1 mb-1">
             <span class="col-sm-2 text-right col-label">Tgl. Publish:</span>
             <span class="col-sm-10">
-                <span class="icon-calendar-empty">
-                {{ obj.date_created }}
-            </span>
+                <span class="icon-calendar-empty"></span>
+                {{ momentjs(obj.date_created).format('DD MMMM YYYY, HH:mm') }}
         </div>
         <div class="row mt-1 mb-1">
             <span class="col-sm-2 text-right col-label">Tgl. Diperbarui:</span>
             <span class="col-sm-10">
-                <span class="icon-calendar-empty">
-                {{ obj.last_updated }}
-            </span>
+                <span class="icon-calendar-empty"></span>
+                {{ momentjs(obj.last_updated).format('DD MMMM YYYY, HH:mm') }}
         </div>
         <div class="row mt-1 mb-1">
             <span class="col-sm-2 text-right col-label">Penerima:</span>
@@ -106,7 +105,6 @@
     </div>
 </div>
 
-{% include 'includes/_js_dep.html' %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/summernote.css') }}">
 <script type="text/javascript" src="{{ url_for('static', filename='js/summernote.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/lang/summernote-id-ID.min.js') }}"></script>

@@ -2,9 +2,11 @@ import os
 import logging
 
 from flask import Flask, redirect, url_for
+from unma.momentjs import momentjs
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
+app.jinja_env.globals['momentjs'] = momentjs
 
 app.config.update(
     SECRET_KEY=b'sldf9238r48fhersASDfdf38r948fjF3498fjdFf4'

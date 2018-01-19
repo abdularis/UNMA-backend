@@ -1,5 +1,6 @@
 {% extends 'layout.html' %}
 {% block body %}
+{% include 'includes/_js_dep.html' %}
 {% include 'includes/navbar.html' %}
 
 <div class="container">
@@ -14,7 +15,7 @@
                         {% for latest_announcement in model.latest_announcements %}
                         <li class="list-group-item list-group-item-action">
                             <div class="text-muted mb-2">
-                                <span class="small announcement-date"><span class="icon-calendar-empty"></span> {{ latest_announcement.date_created }}</span>
+                                <span class="small announcement-date"><span class="icon-calendar-empty"></span> {{ momentjs(latest_announcement.date_created).format('MMM DD YYYY, HH:mm') }}</span>
                                 <span class="ml-2"><span class="icon-user"></span> {{ latest_announcement.publisher }}</span>
                             </div>
                             <div>
@@ -47,5 +48,4 @@
     </div>
 </div>
 
-{% include 'includes/_js_dep.html' %}
 {% endblock %}

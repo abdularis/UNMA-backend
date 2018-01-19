@@ -67,10 +67,12 @@ class AnnouncementModelView:
         self.public_id = announcement.public_id
         self.publisher = announcement.publisher.name
         self.attachment = announcement.attachment
-        self.date_created = datetime.datetime.fromtimestamp(announcement.date_created) \
-            .strftime('%d %b %Y %H:%M')
-        self.last_updated = datetime.datetime.fromtimestamp(announcement.last_updated) \
-            .strftime('%d %b %Y %H:%M')
+        # self.date_created = datetime.datetime.fromtimestamp(announcement.date_created) \
+        #     .strftime('%d %b %Y %H:%M')
+        # self.last_updated = datetime.datetime.fromtimestamp(announcement.last_updated) \
+        #     .strftime('%d %b %Y %H:%M')
+        self.date_created = announcement.date_created
+        self.last_updated = announcement.last_updated
         self.receivers = len(announcement.students)
 
 

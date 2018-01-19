@@ -13,7 +13,7 @@
                         </a>
                     </div>
                     <div>
-                        <span class="small text-muted announcement-date"><span class="icon-calendar-empty"></span> {{ obj.date_created }}</span>
+                        <span class="small text-muted announcement-date"><span class="icon-calendar-empty"></span> {{ momentjs(obj.date_created).format('DD MMMM YYYY, HH:mm') }}</span>
                         <span class="badge badge-secondary ml-2"><span class="icon-user"></span> {{ obj.publisher }}</span>
                     </div>
                 </div>
