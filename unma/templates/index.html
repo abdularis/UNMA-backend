@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+{% block body %}
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+    <div class="navbar-nav mr-auto">
+    </div>
+    <div class="navbar-nav">
+        <a href="{{ url_for('admin.login') }}" class="nav-item nav-link">Admin</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="jumbotron mt-3">
+        <div class="row">
+            <div class="col-auto">
+                <img src="{{ url_for('static', filename='images/client_app_icon.png') }}" width="150">
+            </div>
+            <div class="col">
+                <p>UNMA Mobile Announcement (for Android)</p>
+                <a href="https://github.com/abdularis/UNMA-android-client/releases/download/v1.0/com.paperplanes.unma.apk" class="btn btn-primary">Download</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

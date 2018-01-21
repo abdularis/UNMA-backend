@@ -1,7 +1,7 @@
 import os
 import logging
 
-from flask import Flask, redirect, url_for
+from flask import Flask, render_template
 from unma.momentjs import momentjs
 
 logging.basicConfig(level=logging.INFO)
@@ -24,4 +24,4 @@ app.register_blueprint(unma.admin.admin)
 
 @app.route('/')
 def index():
-    return redirect(url_for('admin.login'))
+    return render_template('index.html')
