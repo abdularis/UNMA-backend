@@ -20,6 +20,7 @@
             <a class="nav-item nav-link ml-3 {{ 'active' if page == 'class' }}" href="{{ url_for('admin.class_read') }}">Kelas</a>
             <a class="nav-item nav-link ml-3 {{ 'active' if page == 'student' }}" href="{{ url_for('admin.student_read') }}">Mahasiswa</a>
             <a class="nav-item nav-link ml-3 {{ 'active' if page == 'publisher' }}" href="{{ url_for('admin.publisher_read') }}">Publisher</a>
+            <a class="nav-item nav-link ml-3 {{ 'active' if page == 'lecturer' }}" href="{{ url_for('admin.lecturer_read') }}">Dosen</a>
             {% endif %}
         </div>
 

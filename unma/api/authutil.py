@@ -8,16 +8,21 @@ from flask import request, g
 
 from unma.unmaapp import app
 from unma.database import db_session
-from unma.models import StudentToken
+from unma.models import StudentToken, LecturerToken
 from .response import unauth_response
 
 
-def create_access_token(user_id, username):
+TOKEN_TYPE_FOR_STUDENT = 1
+TOKEN_TYPE_FOR_LECTURER = 2
+
+
+def create_access_token(user_id, username, token_type):
     payload = {
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30),
         'iat': datetime.datetime.utcnow(),
         'uid': user_id,
-        'unm': username
+        'unm': username,
+        'typ': token_type
     }
     token = jwt.encode(payload, app.config.get('SECRET_KEY')).decode('utf-8')
     return token, payload
@@ -34,13 +39,20 @@ def token_required(f):
                 try:
                     token = auth_key_pair[1]
                     payload = jwt.decode(token, app.config.get('SECRET_KEY'))
-                    result = db_session.query(StudentToken) \
-                        .filter(StudentToken.student_id == payload.get('uid'),
-                                StudentToken.acc_token == token).first()
+                    result = None
+                    if payload.get('typ') == TOKEN_TYPE_FOR_STUDENT:
+                        result = db_session.query(StudentToken) \
+                            .filter(StudentToken.student_id == payload.get('uid'),
+                                    StudentToken.acc_token == token).first()
+                    elif payload.get('typ') == TOKEN_TYPE_FOR_LECTURER:
+                        result = db_session.query(LecturerToken) \
+                            .filter(LecturerToken.lecturer_id == payload.get('uid'),
+                                    LecturerToken.acc_token == token).first()
                     if not result:
                         return unauth_response()
 
                     g.user_token = token
+                    g.user_type = payload.get('typ')
                     g.user_id = payload.get('uid')
                     g.user_username = payload.get('unm')
                     g.user_fcm_token = result.fcm_token

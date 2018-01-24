@@ -10,6 +10,7 @@ from .students import CrudStudent
 from .publishers import CrudPublisher
 from .announcements import CrudAnnouncement
 from .profiles import UpdatePasswordView, UpdateProfileInfoView, ProfileDetailView
+from .lecturer import CrudLecturer
 
 
 admin = Blueprint('admin', __name__,
@@ -29,3 +30,4 @@ CrudClass.register_url_rules(admin)
 CrudStudent.register_url_rules(admin)
 CrudPublisher.register_url_rules(admin)
 CrudAnnouncement.register_url_rules(admin)
+CrudLecturer.register_url_rules(admin)

@@ -21,7 +21,8 @@ from unma.ajaxutil import create_response, STAT_SUCCESS, STAT_INVALID, STAT_ERRO
 from unma.common import decorate_function, CrudRouter
 from unma.database import db_session
 from unma.media import save_uploaded_file, get_upload_folder, get_media_folder
-from unma.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Department, Class
+from unma.models import Announcement, Student, StudentToken, StudentAnnouncementAssoc, Admin, Department, Class, \
+    Lecturer, LecturerToken, LecturerAnnouncementAssoc
 from unma.session import LoginRequired
 from unma.htmlfilter import filter_html
 from unma.unmaapp import app
@@ -32,6 +33,7 @@ render_template = decorate_function(render_template, page='publish', title='UNMA
 RECEIVER_TYPE_DEPARTMENT = (1, 'Prodi')
 RECEIVER_TYPE_CLASSES = (2, 'Kelas')
 RECEIVER_TYPE_STUDENTS = (3, 'Mahasiswa')
+RECEIVER_TYPE_LECTURER = (4, 'Dosen')
 
 
 class AnnounceForm(FlaskForm):
@@ -41,12 +43,13 @@ class AnnounceForm(FlaskForm):
     receiver_type = RadioField('Tipe Penerima',
                                validators=[InputRequired()],
                                coerce=int,
-                               choices=[RECEIVER_TYPE_DEPARTMENT, RECEIVER_TYPE_CLASSES, RECEIVER_TYPE_STUDENTS],
+                               choices=[RECEIVER_TYPE_DEPARTMENT, RECEIVER_TYPE_CLASSES, RECEIVER_TYPE_STUDENTS, RECEIVER_TYPE_LECTURER],
                                default=RECEIVER_TYPE_DEPARTMENT[0])
     receiver = SelectMultipleField('Penerima',
                                    validators=[InputRequired()],
                                    coerce=int,
-                                   choices=[])
+                                   choices=[],
+                                   render_kw={'size': 10})
     attachment = FileField('Attachment',
                            validators=[FileAllowed(['png', 'jpg', 'jpeg', 'bmp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'],
                                                     'Tipe file tidak didukung.')])
@@ -73,7 +76,8 @@ class AnnouncementModelView:
         #     .strftime('%d %b %Y %H:%M')
         self.date_created = announcement.date_created
         self.last_updated = announcement.last_updated
-        self.receivers = len(announcement.students)
+        self.receiver_students = announcement.students
+        self.receiver_lecturers = announcement.lecturers
 
 
 def render_html_list_data():
@@ -129,6 +133,12 @@ def get_receiver_by_students():
         return choices
 
 
+def get_receiver_by_lecturers():
+    if g.curr_user.is_admin:
+        return [(obj.id, '%s - %s' % (obj.name, obj.username)) for obj in db_session.query(Lecturer).all()]
+    return []
+
+
 def get_receiver_list(receiver_type):
     if receiver_type == RECEIVER_TYPE_DEPARTMENT[0]:
         return get_receiver_by_departments()
@@ -136,6 +146,8 @@ def get_receiver_list(receiver_type):
         return get_receiver_by_classes()
     elif receiver_type == RECEIVER_TYPE_STUDENTS[0]:
         return get_receiver_by_students()
+    elif receiver_type == RECEIVER_TYPE_LECTURER[0]:
+        return get_receiver_by_lecturers()
     return []
 
 
@@ -168,6 +180,9 @@ class CreateView(MethodView):
             students = self.get_students_from_receiver_type(form)
             self.associate_announcement_with_students(anc, students)
 
+            lecturers = self.get_lecturer_from_receiver_type(form)
+            self.associate_announcement_with_lecturers(anc, lecturers)
+
             attachment_filename = save_uploaded_file(anc.public_id, form.attachment.data)
             if attachment_filename:
                 anc.attachment = attachment_filename
@@ -176,7 +191,7 @@ class CreateView(MethodView):
 
             flash('Pengumuman berhasil di publish!', category='succ')
 
-            self.send_notification(anc, students)
+            self.send_notification(anc, students, lecturers)
 
             html_extra_msg = render_template('admin/partials/anc/announce_save_notif.html')
             return create_response(STAT_SUCCESS, html_list=render_html_list_data(), html_extra=html_extra_msg)
@@ -224,9 +239,30 @@ class CreateView(MethodView):
         return students
 
     @staticmethod
-    def send_notification(anc, students):
-        reg_ids = db_session.query(StudentToken.fcm_token) \
-            .filter(StudentToken.student_id.in_([std.id for std in students])).all()
+    def associate_announcement_with_lecturers(anc, lecturers):
+        for lecturer in lecturers:
+            assoc = LecturerAnnouncementAssoc()
+            assoc.lecturer = lecturer
+            assoc.announcement = anc
+            anc.lecturers.append(assoc)
+
+    @staticmethod
+    def get_lecturer_from_receiver_type(form):
+        return db_session.query(Lecturer).all()
+
+    @staticmethod
+    def send_notification(anc, students, lecturers):
+        reg_ids = None
+        if students and len(students) > 0:
+            reg_ids = db_session.query(StudentToken.fcm_token) \
+                .filter(StudentToken.student_id.in_([std.id for std in students])).all()
+        if lecturers and len(lecturers) > 0:
+            lect_ids = db_session.query(LecturerToken.fcm_token) \
+                .filter(LecturerToken.lecturer_id.in_([lect.id for lect in lecturers])).all()
+            print(lect_ids)
+            reg_ids = reg_ids if reg_ids else []
+            [reg_ids.append(lect) for lect in lect_ids]
+
         if reg_ids:
             f = fcm.FcmNotification(app.config['FCM_SERVER_KEY'])
             try:
@@ -244,6 +280,7 @@ class CreateView(MethodView):
                             if error in fcm.reg_id_errors:
                                 fcm_token = result[0]
                                 db_session.query(StudentToken).filter(StudentToken.fcm_token == fcm_token).delete()
+                                db_session.query(LecturerToken).filter(LecturerToken.fcm_token == fcm_token).delete()
                                 logging.info('Account tokens deleted cause %s is %s' % (fcm_token, error))
 
                 db_session.commit()
@@ -260,7 +297,8 @@ class AnnouncementReceiverDetailViewModel:
 
     def __init__(self, announcement):
         self.announcement = AnnouncementModelView(announcement)
-        self.receivers = announcement.students
+        self.receiver_students = announcement.students
+        self.receiver_lecturers = announcement.lecturers
 
 
 class ReadView(MethodView):
@@ -282,8 +320,10 @@ class ReadView(MethodView):
                     return render_template('admin/announcement_receiver_detail.html', obj=receiver_detail)
                 elif request.args.get('act') == 'resend_notification':
                     students = db_session.query(Student).filter(StudentAnnouncementAssoc.announce_id == model.id, Student.id == StudentAnnouncementAssoc.student_id).all()
+                    lecturers = db_session.query(Lecturer).filter(LecturerAnnouncementAssoc.announce_id == model.id, Lecturer.id == LecturerAnnouncementAssoc.lecturer_id).all()
                     print("Students: %d" % len(students))
-                    if CreateView.send_notification(model, students):
+                    print("Lecturers: %d" % len(lecturers))
+                    if CreateView.send_notification(model, students, lecturers):
                         flash('Notifikasi berhasil dikirim!', category='succ')
                     html_extra = render_template('admin/partials/anc/announce_save_notif.html')
                     return create_response(STAT_SUCCESS, html_extra=html_extra)
@@ -301,7 +341,6 @@ class UpdateView(MethodView):
             form = AnnounceForm()
             form.title.data = model.title
             form.description.data = model.description
-            form.attachment.data = "Hello world"
             form.receiver.choices = get_receiver_by_departments()
 
             html_form = self.render_form(form, model)
@@ -329,7 +368,6 @@ class UpdateView(MethodView):
                     for student_assoc in model.students:
                         students.append(student_assoc.student)
                         student_assoc.read = False
-                        print("read = False")
 
                 if form.attachment.data:
                     attachment_filename = save_uploaded_file(model.public_id, form.attachment.data)
@@ -349,7 +387,7 @@ class UpdateView(MethodView):
     @staticmethod
     def render_form(form, model):
         attach_file_name = model.attachment if model.attachment else 'Tidak ada attachment'
-        receiver_summary = str(len(model.students)) + " Mahasiswa menerima pesan ini"
+        receiver_summary = "%d Mahasiswa dan %d dosen menerima pesan ini" % (len(model.students), len(model.lecturers))
 
         return render_template(
             'admin/partials/anc/announce_form_update.html',

@@ -1,0 +1,31 @@
+<thead class="thead-default">
+    <tr>
+        <th># ({{objs|length}})</th>
+        <th>Nama</th>
+        <th>NIDN</th>
+        <th>Tgl Dibuat</th>
+        <th>Terakhir Login</th>
+        <th>Operasi</th>
+    </tr>
+</thead>
+<tbody>
+    {% for obj in objs %}
+    <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>
+            {{ obj.name }}
+        </td>
+        <td>{{ obj.username }}</td>
+        <td>{{ momentjs(obj.date_created.isoformat() ~ "+00:00").format('MMM DD YYYY, HH:mm') }}</td>
+        <td>{{ momentjs(obj.last_login.isoformat() ~ "+00:00").format('MMM DD YYYY, HH:mm') if obj.last_login else '-' }}</td>
+        <td>
+            <button type="button" class="btn btn-sm btn-warning js-btn-update" data-href="{{url_for('admin.lecturer_update', obj_id=obj.id)}}">
+                Edit
+            </button>
+            <button type="button" class="btn btn-sm btn-danger js-btn-delete" data-href="{{url_for('admin.lecturer_delete', obj_id=obj.id)}}">
+                Delete
+            </button>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>

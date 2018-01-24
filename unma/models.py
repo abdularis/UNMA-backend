@@ -132,10 +132,13 @@ class Announcement(BaseTable):
     students = relationship('StudentAnnouncementAssoc',
                             back_populates='announcement',
                             cascade='all, delete, delete-orphan')
+    lecturers = relationship('LecturerAnnouncementAssoc',
+                             back_populates='announcement',
+                             cascade='all, delete, delete-orphan')
 
 
 class StudentAnnouncementAssoc(BaseTable):
-    __tablename__ = 'studs_anns_assoc'
+    __tablename__ = 'students_announcement_assoc'
 
     student_id = Column(Integer, ForeignKey('students.id'), primary_key=True)
     announce_id = Column(Integer, ForeignKey('announcements.id'), primary_key=True)
@@ -143,3 +146,32 @@ class StudentAnnouncementAssoc(BaseTable):
 
     student = relationship('Student', back_populates='announcements')
     announcement = relationship('Announcement', back_populates='students')
+
+
+class Lecturer(BaseUser, BaseTable):
+    __tablename__ = 'lecturers'
+
+    announcements = relationship('LecturerAnnouncementAssoc',
+                                 back_populates='lecturer',
+                                 cascade='all, delete, delete-orphan')
+
+
+class LecturerAnnouncementAssoc(BaseTable):
+    __tablename__ = 'lecturer_announcement_assoc'
+
+    lecturer_id = Column(Integer, ForeignKey('lecturers.id'), primary_key=True)
+    announce_id = Column(Integer, ForeignKey('announcements.id'), primary_key=True)
+    read = Column(Boolean, default=False)
+
+    lecturer = relationship('Lecturer', back_populates='announcements')
+    announcement = relationship('Announcement', back_populates='lecturers')
+
+
+class LecturerToken(BaseTable):
+    __tablename__ = 'lecturer_tokens'
+
+    lecturer_id = Column(Integer, ForeignKey('lecturers.id'), primary_key=True)
+    acc_token = Column(String(256), unique=True)
+    fcm_token = Column(String(256), unique=True)
+
+    lecturer = relationship('Lecturer')

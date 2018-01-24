@@ -24,21 +24,50 @@
         </div> 
     </div>
 
+    <div class="h3 mb-3 mt-4">
+        Penerima Mahasiswa
+    </div>
+
     <table class="table table-hover table-sm js-dynamic-table">
         <thead class="thead-default">
             <tr>
-                <th># ({{obj.receivers|length}})</th>
+                <th># ({{obj.receiver_students|length}})</th>
                 <th>NPM</th>
                 <th>Nama</th>
                 <th>Dibaca</th>
             </tr>
         </thead>
         <tbody>
-            {% for recv in obj.receivers %}
+            {% for recv in obj.receiver_students %}
             <tr>
                 <td>{{ loop.index }}</td>
                 <td>{{ recv.student.username }}</td>
                 <td>{{ recv.student.name }}</td>
+                <td>{{ '<span class="text-success">Ya</span>'|safe if recv.read else '<span class="text-danger">No</span>'|safe }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="h3 mb-3 mt-4">
+        Penerima Dosen
+    </div>
+
+    <table class="table table-hover table-sm js-dynamic-table">
+        <thead class="thead-default">
+            <tr>
+                <th># ({{obj.receiver_lecturers|length}})</th>
+                <th>NIDN</th>
+                <th>Nama</th>
+                <th>Dibaca</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for recv in obj.receiver_lecturers %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ recv.lecturer.username }}</td>
+                <td>{{ recv.lecturer.name }}</td>
                 <td>{{ '<span class="text-success">Ya</span>'|safe if recv.read else '<span class="text-danger">No</span>'|safe }}</td>
             </tr>
             {% endfor %}

@@ -11,12 +11,14 @@ from unma.models import BaseTable, Admin, Department, Class, Student
 CSV_ADMIN = 'data/admin.csv'
 CSV_PUBLISHERS = 'data/publishers.csv'
 CSV_DEPARTMENTS = 'data/departments.csv'
-CSV_CLASSES = 'data/classes.csv'
+# CLASSES_DESCRIPTOR = [
+#     'data/classes/tii_a_2014.json',
+#     'data/classes/tif_a_2014.json',
+#     'data/classes/tim_a_2014.json',
+#     'data/classes/tis_a_2014.json'
+# ]
 CLASSES_DESCRIPTOR = [
-    'data/classes/tii_a_2014.json',
-    'data/classes/tif_a_2014.json',
-    'data/classes/tim_a_2014.json',
-    'data/classes/tis_a_2014.json'
+    'data/classes/tif_kelas_kp_2017.json'
 ]
 
 
