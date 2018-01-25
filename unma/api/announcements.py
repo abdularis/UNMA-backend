@@ -22,7 +22,7 @@ class AnnouncementDescription(MethodView):
                     .first()
         if result:
             return result[0]
-        return make_response('Description not found!', 404)
+        return make_response('Deskripsi tidak ditemukan!', 404)
 
 
 class AttachmentDownload(MethodView):
@@ -56,7 +56,7 @@ class AnnouncementRead(MethodView):
             if not res.read:
                 res.read = True
                 db_session.commit()
-            return create_response(True, message='Announcement has been marked as read')
+            return create_response(True, message='Pengumuman telah ditandai sebagai dibaca')
         return create_response(False, s_code=404)
 
 
@@ -80,7 +80,7 @@ class AnnouncementList(MethodView):
             if result and len(result) >= 2:
                 return create_response(True, data=self.build_announcement_json_object(result[0], result[1]))
             else:
-                return create_response(False, message="Data not found!")
+                return create_response(False, message="Data tidak ditemukan!")
 
         if g.user_type == TOKEN_TYPE_FOR_STUDENT:
             filters = [StudentAnnouncementAssoc.student_id == g.user_id,

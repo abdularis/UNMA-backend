@@ -80,9 +80,9 @@ class ClientAuthentication(MethodView):
             if user and user.verify_password(form.password.data):
                 data = authorize_user(user, form.fcm_token.data, form.user_type.data)
                 return create_response(True,
-                                       message='Successfully logged in!',
+                                       message='Login sukses',
                                        data=data)
-        return create_response(False, message="Username and password doesn't match")
+        return create_response(False, message="Kombinasi username dan password salah")
 
     @token_required
     def delete(self):
@@ -95,7 +95,7 @@ class ClientAuthentication(MethodView):
                 .filter(LecturerToken.lecturer_id == g.user_id, LecturerToken.acc_token == g.user_token) \
                 .delete()
         db_session.commit()
-        return create_response(True, message='Successfully logged out')
+        return create_response(True, message='Logout sukses')
 
 
 class ClientProfile(MethodView):
@@ -131,7 +131,7 @@ class ClientProfile(MethodView):
                     'username': lect.username,
                     'fcm_token': lect_token.fcm_token
                 }
-        return create_response(True, message='User account information', data=data)
+        return create_response(True, message='Akun informasi pengguna', data=data)
         # return create_response(False, s_code=404)
 
     def post(self):
@@ -147,8 +147,8 @@ class ClientProfile(MethodView):
                     user.password = form.new_password.data
                     db_session.commit()
                     data = authorize_user(user, form.fcm_token.data, g.user_type)
-                    return create_response(True, message='Password updated', data=data, s_code=201)
-                return create_response(False, message='Old password is wrong')
+                    return create_response(True, message='Password diperbarui', data=data, s_code=201)
+                return create_response(False, message='Password lama yang dimasukan salah')
         return create_response(False, s_code=400)
 
 
@@ -166,5 +166,5 @@ class ClientToken(MethodView):
         if res and request.form.get('fcm_token'):
             res.fcm_token = request.form.get('fcm_token')
             db_session.commit()
-            return create_response(True, message='Firebase token successfully updated')
+            return create_response(True, message='Token firebase berhasil diperbarui')
         return create_response(False, s_code=400)
