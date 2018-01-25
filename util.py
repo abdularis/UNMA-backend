@@ -90,7 +90,7 @@ def init_classes(db_session):
                     stud.name = row[0]
                     stud.username = row[1]
                     stud.class_id = c.id
-                    stud.password = '123456789'
+                    stud.password = '123'
                     db_session.add(stud)
                     print('\t\t- Mahasiswa ditambahkan: %s, %s' % (stud.name, stud.username))
 
