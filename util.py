@@ -5,9 +5,9 @@ import os
 import csv
 import json
 
-from unma.models import BaseTable, Admin, Department, Class, Student
+from unma.models import BaseTable, Admin, Department, Class, Student, Lecturer
 
-
+CSV_LECTURERS = 'data/dosen.csv'
 CSV_ADMIN = 'data/admin.csv'
 CSV_PUBLISHERS = 'data/publishers.csv'
 CSV_DEPARTMENTS = 'data/departments.csv'
@@ -26,6 +26,19 @@ def _write_json_config(dict_config, file_path):
     with open(file_path, 'w') as f:
         json.dump(dict_config, f)
         print('\tConfig created: %s' % file_path)
+
+
+def init_lecturers(db_session):
+    print("[*] Import akun dosen")
+    with open(CSV_LECTURERS) as csv_file:
+        data = csv.reader(csv_file, delimiter=';')
+        for row in data:
+            lect = Lecturer()
+            lect.name = row[0]
+            lect.username = row[1]
+            lect.password = '123'
+            db_session.add(lect)
+            print('\tAkun dosen ditambahkan: %s - %s' % (row[0], row[1]))
 
 
 def init_admin(db_session):
@@ -110,6 +123,7 @@ def gen_db(url_connection):
     init_publishers(db_session)
     init_departments(db_session)
     init_classes(db_session)
+    init_lecturers(db_session)
 
     db_session.commit()
     cfg = {
