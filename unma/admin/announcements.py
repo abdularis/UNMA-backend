@@ -59,7 +59,7 @@ class AnnounceForm(FlaskForm):
         self.receiver.choices = []
 
     def validate_on_submit_update(self):
-        return self.is_submitted() and self.title.data and self.description.data
+        return self.is_submitted() and self.title.validate(form=self)
 
 
 class AnnouncementModelView:
@@ -177,11 +177,14 @@ class CreateView(MethodView):
             anc.title = form.title.data
             anc.description = filter_html(form.description.data)
 
-            students = self.get_students_from_receiver_type(form)
-            self.associate_announcement_with_students(anc, students)
-
-            lecturers = self.get_lecturer_from_receiver_type(form)
-            self.associate_announcement_with_lecturers(anc, lecturers)
+            students = []
+            lecturers = []
+            if form.receiver_type.data == RECEIVER_TYPE_LECTURER[0]:
+                lecturers = self.get_lecturer_from_receiver_type(form)
+                self.associate_announcement_with_lecturers(anc, lecturers)
+            else:
+                students = self.get_students_from_receiver_type(form)
+                self.associate_announcement_with_students(anc, students)
 
             attachment_filename = save_uploaded_file(anc.public_id, form.attachment.data)
             if attachment_filename:
@@ -248,7 +251,7 @@ class CreateView(MethodView):
 
     @staticmethod
     def get_lecturer_from_receiver_type(form):
-        return db_session.query(Lecturer).all()
+        return db_session.query(Lecturer).filter(Lecturer.id.in_(form.receiver.data)).all()
 
     @staticmethod
     def send_notification(anc, students, lecturers):
@@ -358,16 +361,27 @@ class UpdateView(MethodView):
                 model.description = filter_html(form.description.data)
                 model.last_updated = time.time()
 
-                students = []
+                receiver_students = []
+                receiver_lecturers = []
                 if form.receiver.data:
                     db_session.query(StudentAnnouncementAssoc)\
                         .filter(StudentAnnouncementAssoc.announce_id == model.id).delete()
-                    students = CreateView.get_students_from_receiver_type(form)
-                    CreateView.associate_announcement_with_students(model, students)
+                    db_session.query(LecturerAnnouncementAssoc)\
+                        .filter(LecturerAnnouncementAssoc.announce_id == model.id).delete()
+
+                    if form.receiver_type.data == RECEIVER_TYPE_LECTURER[0]:
+                        receiver_lecturers = CreateView.get_lecturer_from_receiver_type(form)
+                        CreateView.associate_announcement_with_lecturers(model, receiver_lecturers)
+                    else:
+                        receiver_students = CreateView.get_students_from_receiver_type(form)
+                        CreateView.associate_announcement_with_students(model, receiver_students)
                 else:
                     for student_assoc in model.students:
-                        students.append(student_assoc.student)
+                        receiver_students.append(student_assoc.student)
                         student_assoc.read = False
+                    for lecturer_assoc in model.lecturers:
+                        receiver_lecturers.append(lecturer_assoc.lecturer)
+                        lecturer_assoc.read = False
 
                 if form.attachment.data:
                     attachment_filename = save_uploaded_file(model.public_id, form.attachment.data)
@@ -375,7 +389,7 @@ class UpdateView(MethodView):
                         model.attachment = attachment_filename
                 db_session.commit()
 
-                CreateView.send_notification(model, students)
+                CreateView.send_notification(model, receiver_students, receiver_lecturers)
 
                 flash('Pengumuman berhasil di Update!', category='succ')
 
