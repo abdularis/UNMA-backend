@@ -1,7 +1,7 @@
 {
     "id": 5,
     "prodi_id": 2,
-    "name": "Kelas Kerja Praktek",
+    "name": "Kerja Praktek",
     "year": 2017,
     "type": 1,
     "students_csv_path": "data/classes/tif_kelas_kp_2017.csv"
