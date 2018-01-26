@@ -134,9 +134,9 @@ def get_receiver_by_students():
 
 
 def get_receiver_by_lecturers():
-    if g.curr_user.is_admin:
-        return [(obj.id, '%s - %s' % (obj.name, obj.username)) for obj in db_session.query(Lecturer).all()]
-    return []
+    # if g.curr_user.is_admin:
+    return [(obj.id, '%s - %s' % (obj.name, obj.username)) for obj in db_session.query(Lecturer).all()]
+    # return []
 
 
 def get_receiver_list(receiver_type):
