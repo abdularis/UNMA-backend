@@ -1,11 +1,11 @@
 @font-face {
-  font-family: 'udas';
-  src: url('../font/udas.eot?88128596');
-  src: url('../font/udas.eot?88128596#iefix') format('embedded-opentype'),
-       url('../font/udas.woff2?88128596') format('woff2'),
-       url('../font/udas.woff?88128596') format('woff'),
-       url('../font/udas.ttf?88128596') format('truetype'),
-       url('../font/udas.svg?88128596#udas') format('svg');
+  font-family: 'unma';
+  src: url('../font/unma.eot?88128596');
+  src: url('../font/unma.eot?88128596#iefix') format('embedded-opentype'),
+       url('../font/unma.woff2?88128596') format('woff2'),
+       url('../font/unma.woff?88128596') format('woff'),
+       url('../font/unma.ttf?88128596') format('truetype'),
+       url('../font/unma.svg?88128596#unma') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -14,14 +14,14 @@
 /*
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
-    font-family: 'udas';
-    src: url('../font/udas.svg?88128596#udas') format('svg');
+    font-family: 'unma';
+    src: url('../font/unma.svg?88128596#unma') format('svg');
   }
 }
 */
  
  [class^="icon-"]:before, [class*=" icon-"]:before {
-  font-family: "udas";
+  font-family: "unma";
   font-style: normal;
   font-weight: normal;
   speak: none;
