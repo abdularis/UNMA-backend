@@ -12,11 +12,22 @@ from unma.models import StudentToken, LecturerToken
 from .response import unauth_response
 
 
+# ada dua tipe pengguna yang login menggunakan smartphone (android)
+# yaitu mahasiswa (student) dan dosen (lecturer)
 TOKEN_TYPE_FOR_STUDENT = 1
 TOKEN_TYPE_FOR_LECTURER = 2
 
 
 def create_access_token(user_id, username, token_type):
+    """
+    Fungsi pembantu untuk membuat jwt token dari parameter yang diberikan
+
+    :param user_id: id pengguna (primary key) mahasiswa atau dosen
+    :param username: nama pengguna
+    :param token_type: @TOKEN_TYPE_FOR_STUDENT atau @TOKEN_TYPE_FOR_LECTURER
+    :return: tuple string token dan dictionary payload
+    """
+
     payload = {
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30),
         'iat': datetime.datetime.utcnow(),
@@ -29,6 +40,15 @@ def create_access_token(user_id, username, token_type):
 
 
 def token_required(f):
+    """
+    Decorator untuk digunakan pada View class, jika token ada pada sebuah request
+    dan ternyata valid maka View akan dieksekusi dan sebaliknya akan meresponse
+    unauth_response
+
+    :param f: fungsi yang akan didekor
+    :return: return value dari f atau unauth_response
+    """
+
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         # Authorization: key=<access token>

@@ -14,6 +14,9 @@ from unma.models import StudentAnnouncementAssoc, Announcement, LecturerAnnounce
 
 
 class AnnouncementDescription(MethodView):
+    """End point untuk mengembalikan deskripsi dari pengumuman yang
+        diidentifikasi oleh public id pengumuman tersebut"""
+
     decorators = [token_required]
 
     def get(self, pub_id):
@@ -26,6 +29,9 @@ class AnnouncementDescription(MethodView):
 
 
 class AttachmentDownload(MethodView):
+    """End point download berkas lampiran, diidentifikasi oleh public id
+        pengumuman dan nama berkas"""
+
     decorators = [token_required]
 
     def get(self, pub_id, filename):
@@ -36,6 +42,9 @@ class AttachmentDownload(MethodView):
 
 
 class AnnouncementRead(MethodView):
+    """End point untuk menandai pengumuman dengan public id pub_id
+        sebagai dibaca"""
+
     decorators = [token_required]
 
     def put(self, pub_id):
@@ -61,6 +70,9 @@ class AnnouncementRead(MethodView):
 
 
 class AnnouncementList(MethodView):
+    """End point untuk men-query daftar atau satu pengumuman yang dimiliki oleh
+        mahasiswa (student) atau dosen (lecturer)"""
+
     decorators = [token_required]
 
     def get(self, obj_id=None):
@@ -107,6 +119,13 @@ class AnnouncementList(MethodView):
 
     @staticmethod
     def build_announcement_json_object(read, announcement):
+        """Buat representasi json dalam bentuk dictionary untuk satu pengumuman
+
+        :param read: boolean, apakah sudah dibaca atau belum
+        :param announcement: object pengumuman
+        :return: dictionary yang merepresentasikan json
+        """
+
         obj = {
             'id': announcement.public_id,
             'title': announcement.title,

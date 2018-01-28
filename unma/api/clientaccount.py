@@ -34,6 +34,15 @@ class UpdatePasswordForm(FlaskForm):
 
 
 def authorize_user(user, fcm_token, user_type):
+    """
+    Fungsi helper untuk mengauthorisasi pengguna
+
+    :param user: object user (mahasiswa atau dosen)
+    :param fcm_token: string firebase token
+    :param user_type: tipe pengguna @TOKEN_TYPE_FOR_STUDENT atau TOKEN_TYPE_FOR_LECTURER
+    :return: data untuk api response
+    """
+
     token, payload = create_access_token(user.id, user.username, user_type)
     user.last_login = time_now()
 
@@ -63,8 +72,14 @@ def authorize_user(user, fcm_token, user_type):
 
 
 class ClientAuthentication(MethodView):
+    """ End point untuk login dan logout
+    """
 
     def post(self):
+        """Login, dua pengguna berbeda mahasiswa dan dosen menggunakan
+        method ini untuk proses login
+        """
+
         form = LoginForm()
         if form.validate_on_submit():
             user = None
@@ -86,6 +101,10 @@ class ClientAuthentication(MethodView):
 
     @token_required
     def delete(self):
+        """Logout, method ini hanya dapat dipanggil jika sudah login,
+        ditandai dengan dekorator token_required
+        """
+
         if g.user_type == TOKEN_TYPE_FOR_STUDENT:
             db_session.query(StudentToken) \
                 .filter(StudentToken.student_id == g.user_id, StudentToken.acc_token == g.user_token) \
@@ -99,6 +118,9 @@ class ClientAuthentication(MethodView):
 
 
 class ClientProfile(MethodView):
+    """End point untuk mendapatkan detail profil dan update profil
+    """
+
     decorators = [token_required]
 
     def get(self):
@@ -135,6 +157,9 @@ class ClientProfile(MethodView):
         # return create_response(False, s_code=404)
 
     def post(self):
+        """Update password profil
+        """
+
         form = UpdatePasswordForm()
         if form.validate_on_submit():
             user = None
@@ -153,6 +178,9 @@ class ClientProfile(MethodView):
 
 
 class ClientToken(MethodView):
+    """End point untuk mendapatkan token firebase dan memperbarui
+    token firebase pada database server"""
+
     decorators = [token_required]
 
     def get(self):
