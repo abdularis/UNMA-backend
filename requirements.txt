@@ -15,7 +15,7 @@ Flask-WTF==0.14.2
 gunicorn==19.7.1
 html-sanitizer==1.3.0
 html5lib==1.0b10
-httplib2==0.10.3
+httplib2==0.18.0
 idna==2.6
 imgkit==0.1.8
 itsdangerous==0.24
