@@ -19,7 +19,7 @@ httplib2==0.10.3
 idna==2.6
 imgkit==0.1.8
 itsdangerous==0.24
-Jinja2==2.9.6
+Jinja2==2.11.3
 lxml==4.1.0
 MarkupSafe==1.0
 mccabe==0.6.1
