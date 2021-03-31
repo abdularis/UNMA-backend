@@ -20,7 +20,7 @@ idna==2.6
 imgkit==0.1.8
 itsdangerous==0.24
 Jinja2==2.9.6
-lxml==4.1.0
+lxml==4.6.3
 MarkupSafe==1.0
 mccabe==0.6.1
 olefile==0.44
